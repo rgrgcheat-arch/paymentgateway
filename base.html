@@ -1,0 +1,143 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PAYMENT GATEWAY</title>
+<style>
+:root{--bg:#fdf2f8;--card:#fff;--line:#f7d4e6;--tx:#2b1033;--mut:#7d6389;--pur:#ec4899;--gold:#ec4899;--pk2:#db2777;--ok:#10b981;--err:#ef4444;--soft:#fdeaf4}
+*{box-sizing:border-box}body{margin:0;font:14px/1.5 system-ui,Segoe UI,Roboto,sans-serif;color:var(--tx);background:var(--bg) linear-gradient(135deg,#fdf2f8 0%,#f6f0ff 55%,#fde8f1 100%) fixed}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:linear-gradient(rgba(236,72,153,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(236,72,153,.05) 1px,transparent 1px);background-size:44px 44px}
+a{color:var(--gold);text-decoration:none}
+nav.pub{display:flex;align-items:center;gap:14px;padding:12px 18px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.logo{font-weight:800;font-size:16px;color:var(--tx);display:inline-flex;align-items:center;gap:10px}.logo b{color:var(--pur)}.logo i{font-style:normal;width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#db2777,#a855f7);color:#fff;font-size:14px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(219,39,119,.35)}
+.pub .sp{flex:1}
+.top{display:flex;align-items:center;gap:12px;padding:8px 14px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.ib{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--soft);border:1px solid #f3b6d6;border-radius:13px;color:var(--pur);font-size:18px;padding:0;cursor:pointer}
+.top .tt{font-weight:700;font-size:16px;line-height:1.2}.top .ts{color:var(--mut);font-size:12px}
+#ov{position:fixed;inset:0;background:rgba(43,16,51,.45);opacity:0;pointer-events:none;transition:.2s;z-index:20}
+#dr{position:fixed;top:0;left:0;bottom:0;width:290px;max-width:84vw;background:#fff;transform:translateX(-102%);transition:transform .22s;z-index:21;display:flex;flex-direction:column;overflow-y:auto;box-shadow:8px 0 30px rgba(120,30,80,.18)}
+body.dopen #dr{transform:none}body.dopen #ov{opacity:1;pointer-events:auto}
+.dh{padding:20px 18px 8px}.dh .logo{font-size:19px;letter-spacing:-.5px}
+.ws{margin:12px 14px;padding:12px;border:1px solid var(--line);border-radius:18px;display:flex;gap:12px;align-items:center}
+.ws i{font-style:normal;width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#db2777,#a855f7);flex:none;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.ws b{display:block;line-height:1.2}.ws small{color:var(--mut)}
+.dl{padding:6px 12px;flex:1}.dl .sec{font-size:11px;letter-spacing:.14em;color:var(--mut);margin:14px 8px 6px;font-weight:700}
+.dl a{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:14px;color:var(--mut);font-weight:600;font-size:14px}
+.dl a.on{background:var(--soft);color:var(--pur)}
+.dl a span{width:22px;text-align:center}
+.df{padding:14px;border-top:1px solid var(--line)}.df form{margin:0}.df button{width:100%}
+main{max-width:1000px;margin:0 auto;padding:20px 16px 110px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 8px 24px rgba(236,72,153,.10)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:0 8px 24px rgba(236,72,153,.10)}.stat small{color:var(--mut)}.stat div{font-size:22px;font-weight:700;margin-top:2px}
+input,select{width:100%;padding:8px 12px;margin:4px 0 10px;font-size:14px;background:var(--soft);border:1px solid var(--line);border-radius:12px;color:var(--tx);font:inherit}
+label{color:var(--mut);font-size:13px}
+button,.btn{display:inline-block;background:linear-gradient(135deg,#db2777,#f472b6);color:#fff;border:0;border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;font-weight:600;line-height:1.5;cursor:pointer}
+.btn2{background:transparent;border:1px solid var(--line);color:var(--tx)}.danger{background:#b4232c}.gold{background:var(--pur);color:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--mut);font-weight:500}
+.wrap{overflow-x:auto}.tag{padding:2px 9px;border-radius:99px;font-size:12px;background:var(--soft);color:var(--pur)}
+.SUCCESS,.active{color:var(--ok)}.FAILED,.suspended,.EXPIRED{color:var(--err)}.PENDING{color:var(--gold)}
+.flash{padding:11px 14px;border-radius:10px;margin-bottom:14px}.flash.ok{background:#d9f7ec;color:#065f46}.flash.err{background:#fde4e4;color:#991b1b}
+pre,code{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px;overflow-x:auto;display:block;font-size:13px}
+.bar{height:12px;background:linear-gradient(90deg,#ec4899,#c084fc);border-radius:8px}.hl{background:linear-gradient(180deg,#fff5fa,#fde4f1)}.big{font-size:22px!important}
+h1,h2,h3{margin:.2em 0 .6em}.hero{text-align:center;padding:50px 0}.hero h1{font-size:26px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.mut{color:var(--mut)}.ok{color:var(--ok)}.wide{display:block;width:100%;text-align:center;padding:9px 14px;border-radius:999px;font-size:14px}
+.g4{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:16px}.g4 .stat{padding:18px;min-height:150px;display:flex;flex-direction:column;justify-content:space-between}
+.g4 .stat.top1{border-top:3px solid var(--pur)}.sh{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.sh small{font-weight:700;letter-spacing:.06em;font-size:12px;color:var(--mut)}
+.sh i{font-style:normal;width:38px;height:38px;border-radius:12px;background:var(--soft);color:var(--pur);display:flex;align-items:center;justify-content:center;font-weight:800;flex:none}
+.g4 .stat .big{font-size:22px!important;font-weight:700;margin:8px 0 4px}.g4 .stat em{font-style:normal;font-size:14px}
+@media(min-width:900px){.g4{grid-template-columns:repeat(4,1fr)}}
+.eyebrow{letter-spacing:.16em;font-weight:700;color:var(--pur)}.bank h2{font-size:20px;margin:.3em 0}.bank p{margin:0 0 18px}
+.ch{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:12px}.ch h3{margin:0 0 2px}.ch p{margin:0;font-size:14px}
+.chart{display:flex;align-items:flex-end;gap:8px;height:190px;padding-top:8px}.chart .col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}
+.chart .bw{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}.chart .b{width:70%;max-width:44px;min-height:4px;border-radius:12px 12px 4px 4px;background:linear-gradient(180deg,#f9a8d4,#ec4899)}
+.chart span{font-size:13px;color:var(--mut);margin-top:8px}
+.tr{display:flex;justify-content:space-between;gap:12px;padding:16px 4px;border-bottom:1px solid var(--line)}.tr:last-child{border-bottom:0}
+.tr .oid{font:600 13px ui-monospace,Menlo,monospace;word-break:break-all}.tr .sub{color:var(--mut);font-size:13px;margin-top:3px;word-break:break-all}.tr .r{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px}.tr .amt{font-weight:700;font-size:15px}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;background:var(--soft);color:var(--pur)}
+.pill::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:6px}
+.pill.SUCCESS{background:#d9f7ec;color:#0d9f6e}.pill.FAILED,.pill.EXPIRED{background:#fde4e8;color:#e0364f}.pill.PENDING,.pill.CREATED{background:#fff3d6;color:#b7791f}.pill.REFUNDED,.pill.REFUND_PENDING{background:#f1e7f5;color:#6b4a78}
+.tfilter{display:flex;flex-direction:column;gap:12px}.tfilter input,.tfilter select{margin:0;padding:14px}.sbox{position:relative}.sbox span{position:absolute;left:14px;top:12px;color:var(--mut)}.sbox input{padding-left:38px}
+.exp{text-align:center;font-weight:600;font-size:14px}.tl{padding:6px 16px}.tl .tr a{font-weight:700}.rf{display:flex;gap:6px;margin:0}.rf input{width:70px;margin:0;padding:5px 8px}.rf button{padding:5px 12px}
+.top .tl2{display:flex;gap:8px;flex:none}.top .tl2 .ib,.top>.ib{width:34px;height:34px;font-size:17px;border-radius:13px}.top{gap:8px}.top .ts{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.top .tt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bellw{position:relative}.bellw b{position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border-radius:99px;min-width:20px;height:20px;font-size:12px;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.top .tb{flex:1;min-width:0;margin-left:4px}
+body.dk{--bg:#1a0b1f;--card:#261029;--line:#4a2150;--tx:#fde7f3;--mut:#c7a1c9;--soft:#3a1a40}body.dk::before{opacity:.4}body.dk{background:#1a0b1f}
+body.dk .top,body.dk #dr,body.dk nav.pub{background:#261029}body.dk .ib{background:#3a1a40;border-color:#5b2a62}
+body.dk .pill.SUCCESS{background:#0f3a2f}body.dk .pill.FAILED,body.dk .pill.EXPIRED{background:#40202a}body.dk .pill.PENDING{background:#3d3217}
+.bnav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:flex-end;padding:5px 6px calc(10px + env(safe-area-inset-bottom,0px))}
+.bnav a{flex:1;text-align:center;color:var(--mut);font-size:12px;font-weight:600}.bnav a i{display:block;font-style:normal;font-size:18px;line-height:1.3}.bnav a.on{color:var(--pur)}
+.bnav a.plus b{display:flex;margin:-24px auto 2px;width:48px;height:44px;border-radius:16px;background:var(--pur);color:#fff;font-size:26px;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(236,72,153,.4)}
+@media(min-width:900px){.bnav{display:none}main{padding-bottom:60px}}
+@media(min-width:900px){main{margin-left:290px;max-width:1100px}.top{margin-left:290px}#dr{transform:none;box-shadow:none;border-right:1px solid var(--line)}#ov{display:none}.top>.ib{display:none}}
+
+#mbar{display:none;align-items:center;gap:8px;padding:5px 12px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:7;height:42px;box-sizing:border-box}
+body.mon #mbar{display:flex}body.mon .top{top:42px}
+#mbar .mb{width:30px;height:30px;border-radius:50%;background:var(--soft);border:1px solid #f3b6d6;color:var(--pur);font-size:13px;padding:0;display:flex;align-items:center;justify-content:center;flex:none}
+#mbar .mb.pp{background:var(--pur);color:#fff;border-color:var(--pur)}
+#mbar .mt{flex:1;min-width:0;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mbar .mt small{color:var(--mut);font-weight:500;margin-right:6px}
+#mbar .mp{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--pur);pointer-events:none}
+#mshow{display:none;position:fixed;right:12px;bottom:84px;z-index:8;width:40px;height:40px;border-radius:50%;padding:0;font-size:18px;box-shadow:0 8px 20px rgba(236,72,153,.4)}
+body.mhid #mshow{display:block}
+@media(min-width:900px){
+#mbar{margin-left:290px}#mshow{bottom:20px}}
+body.dk #mbar{background:#261029}
+</style></head><body>
+{% set p=request.url.path if request else '' %}
+{% if user %}
+<div id="mbar"><button class="mb" id="mprev" aria-label="Previous">⏮</button><button class="mb pp" id="mpp" aria-label="Play or pause">▶</button><button class="mb" id="mnext" aria-label="Next">⏭</button>
+<div class="mt" id="mtitle"></div><button class="mb" id="mclose" aria-label="Close music bar">✕</button><div class="mp" id="mprog"></div></div>
+<button class="ib gold" id="mshow" aria-label="Show music">♪</button>
+<div class="top"><button class="ib" aria-label="Menu" onclick="document.body.classList.toggle('dopen')">☰</button>
+<div class="tl2"><button class="ib" aria-label="Theme" onclick="document.body.classList.toggle('dk');try{localStorage.dk=document.body.classList.contains('dk')?1:0}catch(e){}">◐</button><a class="ib bellw" href="/notifications" aria-label="Notifications"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>{% if bell %}<b>{{ '99+' if bell>99 else bell }}</b>{% endif %}</a></div>
+<div class="tb"><div class="tt">{{ {'/dashboard':'Overview','/gateways':'Merchant setup','/profile':'My profile','/keys':'API Keys','/transactions':'Transactions','/transactions/new':'New payment','/webhooks':'Webhooks','/subscription':'Subscriptions','/notifications':'Notifications','/docs-api':'Docs','/team':'Team','/admin':'Owner Panel','/admin/subscriptions':'Plans & pricing','/admin/broadcast':'Broadcast','/admin/backup':'Backup','/admin/music':'Music'}.get(p,'PAYMENT GATEWAY') }}</div>{% if p=='/dashboard' %}<div class="ts">Your payment performance at a glance.</div>{% elif p=='/transactions' %}<div class="ts">Search, filter and reconcile every payment.</div>{% elif p=='/gateways' %}<div class="ts">Payment gateways and payout destinations.</div>{% elif p=='/profile' %}<div class="ts">Photo, merchant details and account security.</div>{% elif p=='/keys' %}<div class="ts">Manage live integration credentials.</div>{% elif p=='/subscription' %}<div class="ts">Choose the payment gateway configuration that fits your business.</div>{% elif p=='/notifications' %}<div class="ts">Alerts and messages from the admin.</div>{% elif p=='/admin/subscriptions' %}<div class="ts">Prices, free trial and plan activation.</div>{% elif p=='/admin/backup' %}<div class="ts">Download and restore all data.</div>{% elif p=='/admin/broadcast' %}<div class="ts">Send a message to every user's bell.</div>{% endif %}</div></div>
+<div id="ov" onclick="document.body.classList.remove('dopen')"></div>
+<aside id="dr"><div class="dh"><a class="logo" href="/dashboard"><i>PG</i>PAYMENT <b>GATEWAY</b></a></div>
+<a class="ws" href="/profile" style="color:inherit"><i style="overflow:hidden">{% if user.photo_b64 %}<img src="/profile/photo/{{user.id}}?v={{user.photo_v}}" alt="" style="width:100%;height:100%;object-fit:cover">{% else %}{{ (user.name or 'U')[:1]|upper }}{% endif %}</i><div><b>{{ user.business_name or user.name }}</b><small>Live workspace</small></div></a>
+<div class="dl"><div class="sec">WORKSPACE</div>
+<a href="/dashboard" class="{{'on' if p=='/dashboard'}}"><span>▦</span>Overview</a><a href="/transactions" class="{{'on' if p=='/transactions'}}"><span>⇄</span>Transactions</a><a href="/gateways" class="{{'on' if p=='/gateways'}}"><span>₹</span>Merchant setup</a>
+<div class="sec">DEVELOPERS</div>
+<a href="/keys" class="{{'on' if p=='/keys'}}"><span>⌘</span>API keys</a><a href="/webhooks" class="{{'on' if p=='/webhooks'}}"><span>↯</span>Webhooks</a><a href="/docs-api" class="{{'on' if p=='/docs-api'}}"><span>≡</span>Docs</a>
+<div class="sec">ACCOUNT</div>
+<a href="/profile" class="{{'on' if p=='/profile'}}"><span>☺</span>My profile</a><a href="/subscription" class="{{'on' if p=='/subscription'}}"><span>★</span>Subscriptions</a><a href="/notifications" class="{{'on' if p=='/notifications'}}"><span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>Notifications</a>
+{% if user.role in ['owner','seller'] %}<a href="/team" class="{{'on' if p=='/team'}}"><span>👥</span>Team</a>{% endif %}
+{% if user.role=='owner' %}<a href="/admin" class="{{'on' if p=='/admin'}}"><span>🛡</span>Owner Panel</a><a href="/admin/subscriptions" class="{{'on' if p=='/admin/subscriptions'}}"><span>₹</span>Plans &amp; pricing</a><a href="/admin/broadcast" class="{{'on' if p=='/admin/broadcast'}}"><span>📢</span>Broadcast</a><a href="/admin/music" class="{{'on' if p=='/admin/music'}}"><span>♪</span>Music</a><a href="/admin/backup" class="{{'on' if p=='/admin/backup'}}"><span>💾</span>Backup</a>{% endif %}</div>
+<div class="df"><form method="post" action="/logout"><input type="hidden" name="csrf" value="{{csrf}}"><button class="btn2">Logout</button></form></div></aside>
+{% else %}
+<nav class="pub"><a class="logo" href="/"><i>PG</i>PAYMENT <b>GATEWAY</b></a></nav>
+{% endif %}
+<script>try{if(localStorage.dk==1)document.body.classList.add('dk')}catch(e){}</script>
+<main>{% if flash %}<div class="flash {{flash.k}}">{{flash.m}}</div>{% endif %}{% block c %}{% endblock %}</main>
+{% if user %}<nav class="bnav"><a href="/dashboard" class="{{'on' if p=='/dashboard'}}"><i>▦</i>Home</a><a href="/transactions" class="{{'on' if p=='/transactions'}}"><i>⇄</i>Payments</a><a href="/transactions/new" class="plus"><b>+</b>Create</a><a href="/keys" class="{{'on' if p=='/keys'}}"><i>⌘</i>Links</a><a href="/profile" class="{{'on' if p=='/profile'}}"><i>☺</i>Profile</a></nav>{% endif %}
+{% if user %}<script>
+(function(){
+var K='pgm{{user.id}}',st={},tr=[],idx=0,au=new Audio(),B=document.body,$=function(i){return document.getElementById(i)};
+try{st=JSON.parse(localStorage.getItem(K)||'{}')||{}}catch(e){}
+var fresh=false;try{fresh=localStorage.getItem('pgm_fresh')==='1';if(fresh)localStorage.removeItem('pgm_fresh')}catch(e){}
+if(fresh){st.p=true;st.c=false}   // a new sign-in starts the music again (from the saved track + position)
+function save(){if(!tr.length)return;try{st.i=tr[idx]&&tr[idx].id;st.t=au.currentTime||0;localStorage.setItem(K,JSON.stringify(st))}catch(e){}}
+function ui(){$('mpp').textContent=au.paused?'▶':'⏸';$('mtitle').innerHTML='<small>'+(idx+1)+'/'+tr.length+'</small>';$('mtitle').appendChild(document.createTextNode(tr[idx]?tr[idx].title:''));
+ B.classList.toggle('mon',!st.c);B.classList.toggle('mhid',!!st.c)}
+function load(i,t,go){idx=(i+tr.length)%tr.length;au.src=tr[idx].url;
+ if(t>1)au.addEventListener('loadedmetadata',function f(){au.removeEventListener('loadedmetadata',f);if(isFinite(au.duration)&&t<au.duration-1)au.currentTime=t});
+ st.i=tr[idx].id;st.t=t||0;ui();if(go)play()}
+var armed=false;
+function play(){var p=au.play();if(p&&p.catch)p.catch(function(){ // browser blocks sound until the first tap: start on it
+ if(armed)return;armed=true;var h=function(){document.removeEventListener('pointerdown',h,true);document.removeEventListener('keydown',h,true);armed=false;if(st.p&&!st.c)au.play().catch(function(){})};
+ document.addEventListener('pointerdown',h,true);document.addEventListener('keydown',h,true)});ui()}
+function move(d){st.p=true;st.c=false;load(idx+d,0,true)}
+$('mpp').onclick=function(){if(au.paused){st.p=true;play()}else{st.p=false;au.pause()}save();ui()};
+$('mnext').onclick=function(){move(1)};$('mprev').onclick=function(){move(-1)};
+$('mclose').onclick=function(){st.c=true;st.p=false;au.pause();save();ui()};
+$('mshow').onclick=function(){st.c=false;ui();save()};
+au.addEventListener('ended',function(){st.p=true;load(idx+1,0,true)});
+au.addEventListener('play',ui);au.addEventListener('pause',ui);
+au.addEventListener('timeupdate',function(){if(au.duration)$('mprog').style.width=(100*au.currentTime/au.duration)+'%'});
+au.addEventListener('error',function(){if(tr.length>1&&st.p)setTimeout(function(){load(idx+1,0,true)},800)});
+setInterval(function(){if(tr.length)save()},1000);
+addEventListener('pagehide',save);document.addEventListener('visibilitychange',function(){if(document.hidden)save()});
+fetch('/music/list',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():[]}).then(function(l){
+ if(!l||!l.length)return;tr=l;var i=0;for(var k=0;k<tr.length;k++)if(tr[k].id===st.i)i=k;
+ load(i,i===0&&tr[0].id!==st.i?0:(st.t||0),false);
+ if(st.p&&!st.c)play();else ui();save()}).catch(function(){});
+})();
+</script>{% else %}<script>try{localStorage.setItem('pgm_fresh','1')}catch(e){}</script>{% endif %}
+</body></html>

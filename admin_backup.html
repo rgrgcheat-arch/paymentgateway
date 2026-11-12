@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% block c %}<p><a href="/admin">&larr; Owner Panel</a></p>
+<div class="card"><h3>Download backup</h3>
+<p class="mut" style="margin-top:0">One file with everything: all users (A to Z), business details, plans &amp; subscriptions, gateways, API keys, payments, webhooks, notifications, broadcasts and settings. Currently <b>{{total}}</b> records.</p>
+<a class="btn wide" href="/admin/backup/download">⬇ Download full backup</a>
+<p class="mut" style="font-size:13px;margin-bottom:0">Keep this file private: it contains user data and encrypted gateway credentials. To read the encrypted credentials after a restore, the server must use the <b>same SECRET_KEY</b>.</p></div>
+<form class="card" method="post" action="/admin/backup/auto"><input type="hidden" name="csrf" value="{{csrf}}"><h3>Automatic backup to Telegram</h3>
+<p class="mut" style="margin-top:0">The full backup file is sent to your Telegram automatically (default every 12 hours). The copy stays in Telegram, so you still have it even if Render stops or the data is wiped.</p>
+<label class="chk" style="display:flex;gap:10px;align-items:center;margin:6px 0"><input type="checkbox" name="auto" value="1" {{'checked' if auto_on}} style="width:22px;height:22px;margin:0;flex:none"><span><b>Auto-backup ON</b></span></label>
+<label>Bot token (from @BotFather){% if tg_tok %} <small class="mut">— saved ({{tg_tok_hint}}), leave empty to keep</small>{% endif %}</label><input name="tg_token" placeholder="123456:ABC..." autocomplete="off">
+<label>Your Telegram chat ID</label><input name="tg_chat" value="{{tg_chat}}" placeholder="e.g. 123456789" inputmode="numeric" autocomplete="off">
+<label>Send every (hours)</label><input name="hours" type="number" min="1" max="168" value="{{hours}}">
+<button class="wide">Save</button>
+<p class="mut" style="font-size:13px;margin-bottom:0">Important: open your bot in Telegram and press <b>Start</b> once, otherwise it cannot message you. Last backup: <b>{{last_txt or 'none yet'}}</b>{% if status %}<br>{{status}}{% endif %}</p></form>
+<form class="card" method="post" action="/admin/backup/send-now"><input type="hidden" name="csrf" value="{{csrf}}"><h3>Send a backup to Telegram now</h3><button class="wide btn2">📤 Send now (test)</button></form>
+<form class="card" method="post" action="/admin/backup/restore" enctype="multipart/form-data" onsubmit="return confirm('Start the restore now?')"><input type="hidden" name="csrf" value="{{csrf}}"><h3>Upload backup</h3>
+<p class="mut" style="margin-top:0">Choose a backup file you downloaded earlier (.json.gz). It also works after you changed the code or added new features: new fields get their default values.</p>
+<input type="file" name="file" required accept=".gz,.json,application/gzip,application/json">
+<label class="chk" style="display:flex;gap:10px;align-items:flex-start;margin:6px 0"><input type="radio" name="mode" value="merge" checked style="width:22px;height:22px;margin:2px 0 0;flex:none"><span><b>Add missing only</b> <small class="mut">— keeps current data, brings back users and records that are missing.</small></span></label>
+<label class="chk" style="display:flex;gap:10px;align-items:flex-start;margin:6px 0"><input type="radio" name="mode" value="replace" style="width:22px;height:22px;margin:2px 0 0;flex:none"><span><b>Replace everything</b> <small class="mut">— deletes all current data and loads the backup exactly (all-or-nothing).</small></span></label>
+<label>For "Replace everything" type RESTORE</label><input name="confirm" placeholder="RESTORE" autocomplete="off">
+<button class="wide">Upload &amp; restore</button><p class="mut" style="font-size:13px;margin-bottom:0">After restoring you will be signed out. Download a fresh backup before replacing.</p></form>
+<div class="card wrap"><h3>Current records</h3><table>{% for n,c in counts %}<tr><td>{{n}}</td><td><b>{{c}}</b></td></tr>{% endfor %}</table></div>{% endblock %}

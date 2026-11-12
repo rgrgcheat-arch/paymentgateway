@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block c %}
+<div class="card"><h3>New payment</h3>
+{% if not gws %}<p class="mut">No gateway is enabled yet. <a href="/gateways">Set up a gateway</a> first.</p>{% else %}
+<form method="post" action="/transactions/new"><input type="hidden" name="csrf" value="{{csrf}}">
+<label>Amount (₹)</label><input name="amount" type="number" step="0.01" min="1" required placeholder="99.00">
+<label>Order ID (optional)</label><input name="order_id" maxlength="64" placeholder="Your own order reference">
+<label>Gateway</label><select name="gateway">{% for g in gws %}<option value="{{g}}">{{g|capitalize}}</option>{% endfor %}</select>
+<button class="wide">Create payment</button></form>{% endif %}</div>{% endblock %}

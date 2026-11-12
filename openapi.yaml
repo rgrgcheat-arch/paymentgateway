@@ -1,0 +1,162 @@
+openapi: 3.1.0
+info:
+  title: PAYMENT GATEWAY API
+  version: "1.0"
+  description: |
+    Create UPI payments, poll their status and receive signed webhooks.
+    All amounts are in INR (rupees). Call this API from your SERVER only.
+servers:
+  - url: {{base}}/api
+security:
+  - ApiKeyHeader: []
+paths:
+  /v1/payment/create:
+    post:
+      summary: Create a payment
+      operationId: createPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount: {type: number, description: "Rupees (1 to 100000)"}
+                order_id: {type: string, description: "Your unique order id. Re-sending it returns the same payment."}
+                gateway: {type: string, enum: [paytm, fampay]}
+                customer: {type: object, description: "Optional small JSON object"}
+      responses:
+        "200":
+          description: Payment created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Payment"}
+        "400": {$ref: "#/components/responses/Error"}
+        "401": {$ref: "#/components/responses/Error"}
+        "403": {$ref: "#/components/responses/Error"}
+        "429": {$ref: "#/components/responses/Error"}
+        "502": {$ref: "#/components/responses/Error"}
+  /v1/payment/status/{order_id}:
+    get:
+      summary: Get (and refresh) payment status
+      operationId: getPaymentStatus
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema: {type: string}
+          description: Your order_id or the pay_id
+      responses:
+        "200":
+          description: Current status
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Payment"}
+        "404": {$ref: "#/components/responses/Error"}
+  /v1/payment/verify:
+    post:
+      summary: Verify a payment
+      operationId: verifyPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [order_id]
+              properties:
+                order_id: {type: string}
+      responses:
+        "200":
+          description: Current status
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Payment"}
+  /create_order.php:
+    get:
+      summary: Create a payment (simple GET style)
+      operationId: createOrderSimple
+      security: [{ApiKeyQuery: []}, {ApiKeyHeader: []}]
+      parameters:
+        - {name: amount, in: query, required: true, schema: {type: number}}
+        - {name: order_id, in: query, schema: {type: string}}
+        - {name: gateway, in: query, schema: {type: string, enum: [paytm, fampay]}}
+      responses:
+        "200":
+          description: "{status: success, data: {...Payment}}"
+  /verify.php:
+    get:
+      summary: Verify a payment (simple GET style)
+      operationId: verifySimple
+      security: [{ApiKeyQuery: []}, {ApiKeyHeader: []}]
+      parameters:
+        - {name: order_id, in: query, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: "Paid: {status: success, data: {order_id, amount, utr, payment_time}}. Otherwise {status: pending|failed|expired, data: null}"
+  /v1/account:
+    get:
+      summary: Account owning the API key
+      operationId: getAccount
+      responses:
+        "200":
+          description: Account info
+webhooks:
+  paymentEvent:
+    post:
+      summary: Signed payment event sent to your https endpoint
+      description: |
+        Headers: X-Payment-Gateway-Timestamp (unix seconds) and X-Payment-Gateway-Signature ("sha256=" + hex).
+        Signature = HMAC_SHA256(webhook_secret, timestamp + "." + rawBody). Use the RAW body,
+        reject timestamps older than 5 minutes, compare in constant time, deduplicate on event_id,
+        and reply with any 2xx status. Events: payment.success, payment.failed, payment.expired,
+        payment.refunded, webhook.test.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event: {type: string}
+                event_id: {type: string}
+                order_id: {type: string}
+                pay_id: {type: string}
+                transaction_id: {type: string}
+                amount: {type: number}
+                currency: {type: string}
+                status: {type: string}
+                gateway: {type: string}
+      responses:
+        "200": {description: Acknowledged}
+components:
+  securitySchemes:
+    ApiKeyHeader: {type: apiKey, in: header, name: X-API-Key}
+    ApiKeyQuery: {type: apiKey, in: query, name: api_key}
+  responses:
+    Error:
+      description: 'Error: {"success": false, "error": "message"}'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: {type: boolean}
+              error: {type: string}
+  schemas:
+    Payment:
+      type: object
+      properties:
+        success: {type: boolean}
+        order_id: {type: string}
+        pay_id: {type: string}
+        status: {type: string, enum: [PENDING, SUCCESS, FAILED, EXPIRED, REFUND_PENDING, REFUNDED]}
+        amount: {type: number, description: "Exact amount the customer must pay (FamPay may add 0.00-0.99)"}
+        currency: {type: string}
+        gateway: {type: string}
+        transaction_id: {type: string}
+        payment_url: {type: string}
+        qr_url: {type: string, description: SVG}
+        qr_png_url: {type: string, description: PNG}
+        upi_uri: {type: string}
+        expires_at: {type: string, format: date-time}

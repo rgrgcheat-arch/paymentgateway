@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block c %}<div style="max-width:400px;margin:6px auto 0"><a href="{{back or '#'}}" id="bk" class="btn btn2" style="padding:7px 16px;font-size:13px">&larr; Back</a></div><div class="card" style="max-width:400px;margin:10px auto;text-align:center">
+{% if mphoto %}<img src="{{mphoto}}" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--line)"><br>{% endif %}<small style="color:var(--mut)">{{merchant}}</small><h2 style="margin:4px 0">{{t.amount|rs}}</h2><small style="color:var(--mut)">Order {{t.merchant_order_id or t.pay_id}} · {{t.gateway|capitalize}}</small>
+<div id="box">{% if t.status in ('PENDING','CREATED') %}<div style="background:#fff;border-radius:12px;padding:10px;margin:14px auto;width:250px"><img src="/pay/{{t.pay_id}}/qr.svg" width="230" alt="QR"></div>
+<p>Scan with any UPI app and pay. Expires in <b id="cd">--:--</b></p><p style="color:var(--mut);font-size:13px">Never share your UPI PIN. This page never asks for it.</p>{% endif %}</div>
+<h3 id="st" class="{{t.status}}">{{t.status}}</h3>{% if ret %}<p id="rt" style="display:none"><a class="btn" href="{{ret}}">Back to my plan</a></p>{% endif %}</div>
+<script>
+(function(){var b=document.getElementById('bk');if(!{{ 'true' if back else 'false' }}){b.onclick=function(e){e.preventDefault();if(history.length>1)history.back();else location.href='/'}}})();
+let s={{secs}};const st=document.getElementById('st'),cd=document.getElementById('cd');
+const done=x=>{if(x!='PENDING'&&x!='CREATED'){document.getElementById('box').innerHTML='';st.className=x;st.innerText=x=='SUCCESS'?'✅ Payment Successful':x;var r=document.getElementById('rt');if(r){r.style.display='block';if(x=='SUCCESS')setTimeout(function(){location.href='{{ret}}'},2500)}clearInterval(p);clearInterval(c)}};
+const c=setInterval(()=>{s=Math.max(0,s-1);if(cd)cd.innerText=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')},1000);
+const p=setInterval(()=>fetch('/pay/{{t.pay_id}}/status').then(r=>r.json()).then(j=>done(j.status)).catch(()=>{}),4000);done('{{t.status}}');
+</script>{% endblock %}

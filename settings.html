@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block c %}<h2>Notification settings</h2>
+<form class="card" method="post"><input type="hidden" name="csrf" value="{{csrf}}">
+<label>Telegram chat ID {% if not tg %}(server has no TELEGRAM_BOT_TOKEN set){% endif %}</label><input name="telegram_chat_id" value="{{s.telegram_chat_id}}" placeholder="e.g. 123456789 — message your bot first">
+<p><label><input type="checkbox" name="notify_email" style="width:auto;margin:0 6px 0 0" {{'checked' if s.notify_email}}> Email alerts {% if not mail %}(SMTP not configured on server){% endif %}</label></p>
+<p><label><input type="checkbox" name="notify_telegram" style="width:auto;margin:0 6px 0 0" {{'checked' if s.notify_telegram}}> Telegram alerts</label></p>
+<small style="color:var(--mut)">Alerts: payment success/failure, webhook failure, subscription expiry, secret rotation.</small><br><br><button>Save</button></form>
+<div class="card"><h3>Recent notifications</h3>{% for n in ns %}<p><small style="color:var(--mut)">{{(n.created|ist).strftime('%d %b %H:%M')}}</small> {{n.message}}</p>{% else %}<p style="color:var(--mut)">None yet.</p>{% endfor %}</div>{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}{% block c %}
+<style>
+.pf label{display:block;font-weight:700;color:var(--mut);margin-top:6px}.pf .hint{color:var(--mut);font-size:14px;margin:-6px 0 12px}.pf input[readonly]{opacity:.8}
+.phb{border:1px solid var(--line);border-radius:26px;padding:20px;background:var(--soft);margin:14px 0 18px}
+.av{width:104px;height:104px;border-radius:50%;background:#fff;border:2px solid #f3b6d6;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:800;color:var(--pur);overflow:hidden;margin-bottom:12px}.av img{width:100%;height:100%;object-fit:cover}
+.fp{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.fp label.fb{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 18px;color:var(--tx);cursor:pointer;margin:0}.fp input[type=file]{display:none}.fp span{color:var(--mut)}
+.sep{border:0;border-top:1px solid var(--line);margin:22px 0}
+.th2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.tc{border:2px solid var(--line);border-radius:20px;padding:14px;text-align:center;font-weight:700;cursor:pointer;background:var(--card)}.tc.on{border-color:var(--pur);box-shadow:0 6px 16px rgba(236,72,153,.2)}
+.tc i{display:block;height:46px;border-radius:12px;margin-bottom:8px;background:linear-gradient(135deg,#fdf2f8,#fff)}.tc.dkp i{background:linear-gradient(135deg,#1a0b1f,#4a2150)}
+</style>
+<div class="card pf"><h2 style="margin-bottom:2px">Personal profile</h2><p class="mut" style="margin-top:0">Manage your photo and account details.</p>
+<form method="post" action="/profile" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{{csrf}}">
+<div class="phb"><div class="av" id="av">{% if user.photo_b64 %}<img id="avi" src="/profile/photo/{{user.id}}?v={{user.photo_v}}" alt="">{% else %}{{(user.name or '?')[:1]|upper}}{% endif %}</div>
+<h3 style="margin:0 0 4px">Profile photo</h3><p class="mut" style="margin:0 0 12px">Add your photo or business logo. It also appears on your checkout page.</p>
+<div class="fp"><label class="fb" for="ph">Choose photo</label><input type="file" id="ph" name="photo" accept="image/jpeg,image/png,image/webp"><span id="phn">No photo selected</span></div>
+<p class="mut" style="font-size:14px;margin:10px 0 0">JPG, PNG or WebP · Maximum 2 MB</p>
+{% if user.photo_b64 %}<label class="chk" style="display:flex;gap:10px;align-items:center;margin-top:10px;font-weight:500"><input type="checkbox" name="remove_photo" value="1" style="width:20px;height:20px;margin:0"> Remove current photo</label>{% endif %}</div>
+
+<label>Login email</label><input value="{{user.email}}" readonly><p class="hint">Your registered sign-in email.</p>
+<label>Username</label><input value="{{user.username}}" readonly><p class="hint">Your login username cannot be changed.</p>
+{% if gmail %}<label>Gmail attached (FamPay)</label><input value="{{gmail}}" readonly><p class="hint">Change it in Merchant setup.</p>{% endif %}
+<label>Full name</label><input name="name" required maxlength="120" value="{{user.name}}">
+<label>Phone</label><input name="phone" required maxlength="20" inputmode="tel" value="{{user.phone}}">
+<hr class="sep">
+<h2 style="margin-bottom:2px">Merchant profile</h2><p class="mut" style="margin-top:0">Your business details for the payment workspace.</p>
+<label>Business name</label><input name="business_name" maxlength="120" value="{{user.business_name}}" placeholder="Your business or shop name">
+<label>Business type</label><select name="business_type"><option value="">Select type</option>{% for t in types %}<option {{'selected' if user.business_type==t}}>{{t}}</option>{% endfor %}</select>
+<label>GSTIN (optional)</label><input name="gstin" maxlength="15" value="{{user.gstin}}" placeholder="15 character GSTIN">
+<label>Business address</label><textarea name="address" rows="4" maxlength="500" style="width:100%;padding:10px 12px;background:var(--soft);border:1px solid var(--line);border-radius:12px;color:var(--tx);font:inherit">{{user.address}}</textarea>
+<hr class="sep"><p class="mut">Photo and details are updated when you save.</p><button class="wide">Save profile</button></form></div>
+
+<div class="card"><h3 style="margin-bottom:6px">Account status</h3>{% if user.status=='active' %}<span class="pill SUCCESS">Verified</span>{% else %}<span class="pill EXPIRED">Suspended</span>{% endif %}<p class="mut" style="margin:8px 0 0">Your account status is managed by platform administrators.</p></div>
+
+<div class="card pf"><h2>Change password</h2><form method="post" action="/profile/password"><input type="hidden" name="csrf" value="{{csrf}}">
+<label>Current password</label><input type="password" name="current_password" required autocomplete="current-password">
+<label>New password (8+ characters)</label><input type="password" name="new_password" required minlength="8" autocomplete="new-password">
+<button class="wide btn2" style="margin-top:6px">Update password</button></form></div>
+
+<div class="card"><h3 style="margin-bottom:2px">Dashboard theme</h3><p class="mut" style="margin:0">Choose a theme that matches your workspace. Your choice is saved on this device.</p>
+<div class="th2"><div class="tc" id="t-l"><i></i>Light pink</div><div class="tc dkp" id="t-d"><i></i>Dark plum</div></div></div>
+<script>
+(function(){var ph=document.getElementById('ph');ph.onchange=function(){var f=ph.files[0];document.getElementById('phn').textContent=f?f.name:'No photo selected';if(f){var u=URL.createObjectURL(f);document.getElementById('av').innerHTML='<img src="'+u+'" alt="">'}};
+function mark(){var d=document.body.classList.contains('dk');document.getElementById('t-l').classList.toggle('on',!d);document.getElementById('t-d').classList.toggle('on',d)}
+function set(d){document.body.classList.toggle('dk',d);try{localStorage.dk=d?1:0}catch(e){}mark()}
+document.getElementById('t-l').onclick=function(){set(false)};document.getElementById('t-d').onclick=function(){set(true)};mark();})();
+</script>{% endblock %}

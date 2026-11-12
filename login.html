@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% block c %}
+<style>
+.auth{max-width:400px;margin:14px auto;padding:24px 20px;border-radius:24px}
+.auth h1{font-size:26px;margin:0 0 4px;letter-spacing:-.5px}
+.auth .sub{color:var(--mut);font-size:14px;margin:0 0 16px}.auth .sub a{font-weight:700}
+.auth label{font-weight:700;font-size:13px;margin-top:6px;display:block}
+.auth input{padding:12px 14px;border-radius:14px;font-size:15px;margin:6px 0 12px;background:#fff7fb}
+.pw{position:relative}.pw input{padding-right:84px}
+.pw .show{position:absolute;right:8px;top:50%;transform:translateY(-62%);background:#fff;border:1px solid var(--line);color:var(--pur);border-radius:12px;padding:8px 12px;font-weight:700}
+.auth .forgot{text-align:right;font-weight:700;margin:-4px 0 18px}
+.auth .go{width:100%;padding:10px;border-radius:14px;font-size:15px;box-shadow:0 10px 22px rgba(236,72,153,.28)}
+.auth .or{display:flex;align-items:center;gap:12px;color:var(--mut);margin:18px 0}.auth .or:before,.auth .or:after{content:"";flex:1;height:1px;background:var(--line)}
+.auth .create{display:block;text-align:center;padding:9px;border-radius:14px;background:#fce7f3;border:1px solid #f9a8d4;color:var(--pur);font-weight:600;font-size:14px}
+</style>
+<div class="card auth"><h1>Sign in</h1>
+<p class="sub">New here? <a href="/register">Create an account</a>.</p>
+<form method="post" action="/login"><input type="hidden" name="csrf" value="{{csrf}}">
+<label for="identity">Email or username</label><input id="identity" name="identity" required autocomplete="username" autocapitalize="none" placeholder="you@business.com">
+<label for="password">Password</label><div class="pw"><input id="password" type="password" name="password" required autocomplete="current-password" placeholder="Your password"><button type="button" class="show" onclick="var i=document.getElementById('password');var h=i.type=='password';i.type=h?'text':'password';this.innerText=h?'Hide':'Show'">Show</button></div>
+<div class="forgot"><a href="/forgot">Forgot password?</a></div>
+<button class="go">Sign in &rarr;</button></form>
+<div class="or">or</div>
+<a class="create" href="/register">Create a PAYMENT GATEWAY account</a>
+</div>{% endblock %}

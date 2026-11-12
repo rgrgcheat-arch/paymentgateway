@@ -1,0 +1,40 @@
+{% extends "base.html" %}{% block c %}<p><a href="/admin">&larr; Owner Panel</a></p>
+<h2>{{t.business_name or t.name}} <span class="tag {{t.status}}">{{t.status}}</span></h2>
+<div class="card wrap"><table>
+<tr><th>User ID</th><td>{{t.id}}</td><th>Business</th><td>{{t.business_name or '—'}}</td></tr>
+<tr><th>Contact name</th><td>{{t.name}}</td><th>Role</th><td>{{t.role}}{% if parent %} · under {{parent.username}}{% endif %}</td></tr>
+<tr><th>Work email</th><td>{{t.email}}</td><th>Phone</th><td>{{t.phone}}</td></tr>
+<tr><th>Username</th><td>{{t.username}}</td><th>Joined</th><td>{{(t.created|ist).strftime('%d %b %Y %H:%M')}} IST</td></tr>
+<tr><th>Business type / GSTIN</th><td>{{t.business_type or '—'}} / {{t.gstin or '—'}}</td><th>Terms accepted</th><td>{{(t.terms_at|ist).strftime('%d %b %Y %H:%M') if t.terms_at else '—'}}</td></tr>
+<tr><th>Address</th><td colspan="3" style="white-space:normal">{{t.address or '—'}}</td></tr></table>
+<p class="mut" style="font-size:13px;margin:10px 0 0">Passwords are stored as one-way hashes and cannot be viewed by anyone. Use "Forgot password" to help a user.</p></div>
+
+<div class="card"><h3>Plan</h3>
+{% if sub %}<p><b>{{plan.name}}</b> · <span class="ok">active</span> until <b>{{(sub.end|ist).strftime('%d %b %Y %H:%M') if sub.end else 'lifetime'}} IST</b></p>{% else %}<p><b>No active plan</b> <span class="mut">(gateways locked)</span></p>{% endif %}
+<p class="mut">Free trial: {{'already used' if t.trial_used else 'not used yet'}}</p>
+<div class="row"><a class="btn" href="/admin/subscriptions">Assign / renew plan</a>
+<form method="post" action="/admin/users/{{t.id}}/trial_reset"><input type="hidden" name="csrf" value="{{csrf}}"><button class="btn2">Reset free trial</button></form>
+{% if sub %}<form method="post" action="/admin/users/{{t.id}}/plan_cancel" onsubmit="return confirm('End this plan now?')"><input type="hidden" name="csrf" value="{{csrf}}"><button class="danger">End plan now</button></form>{% endif %}
+{% if t.role!='owner' %}<form method="post" action="/admin/users/{{t.id}}/toggle" onsubmit="return confirm('Change status?')"><input type="hidden" name="csrf" value="{{csrf}}"><button class="btn2">{{'Suspend user' if t.status=='active' else 'Activate user'}}</button></form>{% endif %}</div></div>
+
+<div class="card"><h3>Unlock gateway (admin)</h3>
+<p class="mut" style="font-size:13px;margin:0 0 8px">Give this user FamPay or Paytm access for free. Pick the gateway and how long. Doing it again for the same gateway extends the time; choosing the other gateway switches the plan. Use "End plan now" above to lock it again.</p>
+<form method="post" action="/admin/users/{{t.id}}/unlock" class="row"><input type="hidden" name="csrf" value="{{csrf}}">
+<select name="plan_id" style="margin:0">{% for p in plans.values() if p.code in ('fampay','paytm') %}<option value="{{p.id}}">{{p.name}}</option>{% endfor %}</select>
+<select name="days" style="margin:0"><option value="30">1 month</option><option value="90">3 months</option><option value="180">6 months</option><option value="365">1 year</option></select>
+<input name="custom_days" type="number" min="1" max="3650" placeholder="or custom days" style="margin:0;width:140px">
+<button>Unlock</button></form></div>
+
+<div class="card"><h3>Send a message to this user</h3><form method="post" action="/admin/users/{{t.id}}/message" class="row"><input type="hidden" name="csrf" value="{{csrf}}"><input name="message" maxlength="300" required placeholder="Shows in their bell" style="flex:1;margin:0;min-width:200px"><button>Send</button></form></div>
+
+<div class="grid"><div class="stat"><small>Success balance</small><div>{{s.balance|rs}}</div></div><div class="stat"><small>Orders</small><div>{{s.total}}</div></div><div class="stat"><small>Successful</small><div class="SUCCESS">{{s.ok}}</div></div><div class="stat"><small>Failed</small><div class="FAILED">{{s.failed}}</div></div><div class="stat"><small>Pending</small><div class="PENDING">{{s.pending}}</div></div><div class="stat"><small>Pending amount</small><div>{{s.pend_amt|rs}}</div></div></div>
+
+<div class="card wrap"><h3>Gateways</h3><table><tr><th>Gateway</th><th>Shop name</th><th>UPI ID</th><th>MID / Gmail</th><th>Enabled</th><th>Last test</th></tr>{% for g in gws %}{% set d=gdata.get(g.gateway,{}) %}<tr><td>{{g.gateway}}</td><td>{{d.shop or '—'}}</td><td>{{d.upi or '—'}}</td><td>{{d.extra or '—'}}</td><td class="{{'active' if g.enabled else 'suspended'}}">{{'Yes' if g.enabled else 'No'}}</td><td>{{g.last_test_msg or 'never'}}</td></tr>{% else %}<tr><td colspan="6">None configured.</td></tr>{% endfor %}</table></div>
+<div class="card wrap"><h3>Subscriptions</h3><table><tr><th>ID</th><th>Plan</th><th>Start</th><th>End</th><th>Cash paid</th><th>Source</th><th>Status</th></tr>{% for x in subs %}<tr><td><a href="/subscription/{{x.id}}/receipt">{{x.id}}</a></td><td>{{plans[x.plan_id].name}}</td><td>{{(x.start|ist).strftime('%d %b %Y')}}</td><td>{{(x.end|ist).strftime('%d %b %Y %H:%M') if x.end else '-'}}</td><td>{{x.price_paid|rs}}</td><td>{{x.source}}</td><td>{{x.status}}</td></tr>{% else %}<tr><td colspan="7" class="mut">None.</td></tr>{% endfor %}</table></div>
+<div class="card wrap"><h3>Plan orders</h3><table><tr><th>ID</th><th>Time</th><th>Plan</th><th>List</th><th>Credit</th><th>Paid</th><th>Status</th></tr>{% for o in orders %}<tr><td>{{o.id}}</td><td>{{(o.created|ist).strftime('%d %b %H:%M')}}</td><td>{{plans[o.plan_id].name}}</td><td>{{o.list_price|rs}}</td><td>{{o.credit|rs}}</td><td>{{o.amount|rs}}</td><td>{{o.status}}</td></tr>{% else %}<tr><td colspan="7" class="mut">None.</td></tr>{% endfor %}</table></div>
+<div class="card wrap"><h3>API keys</h3><table><tr><th>Label</th><th>Prefix</th><th>Uses</th><th>Last used</th><th>Status</th></tr>{% for k in keys %}<tr><td>{{k.label}}</td><td>{{k.prefix}}…</td><td>{{k.uses}}</td><td>{{(k.last_used|ist).strftime('%d %b %H:%M') if k.last_used else '-'}}</td><td>{{'revoked' if k.revoked else 'active'}}</td></tr>{% else %}<tr><td colspan="5">None.</td></tr>{% endfor %}</table></div>
+<div class="card wrap"><h3>Transactions</h3><div class="row" style="margin-bottom:8px"><a class="btn btn2" href="?">All</a><a class="btn btn2" href="?status=SUCCESS">Success</a><a class="btn btn2" href="?status=FAILED">Failed</a><a class="btn btn2" href="?status=PENDING">Pending</a><a class="btn btn2" href="?status=EXPIRED">Expired</a></div>
+<table><tr><th>Time</th><th>Order</th><th>Pay ID</th><th>Gateway</th><th>Amount</th><th>Status</th><th>UTR / Ref</th></tr>{% for x in txns %}<tr><td>{{(x.created|ist).strftime('%d %b %H:%M')}}</td><td>{{x.merchant_order_id or '-'}}</td><td>{{x.pay_id}}</td><td>{{x.gateway}}</td><td>{{x.amount|rs}}</td><td class="{{x.status}}">{{x.status}}</td><td>{{x.provider_ref}}</td></tr>{% else %}<tr><td colspan="7">No transactions.</td></tr>{% endfor %}</table></div>
+<div class="card wrap"><h3>Activity log</h3><table>{% for a in acts %}<tr><td>{{(a.created|ist).strftime('%d %b %H:%M')}}</td><td>{{a.action}}</td><td>{{a.detail}}</td></tr>{% else %}<tr><td class="mut">None.</td></tr>{% endfor %}</table></div>
+<div class="card wrap"><h3>Recent logins</h3><table>{% for l in logins %}<tr><td>{{(l.created|ist).strftime('%d %b %H:%M')}}</td><td>{{l.ip}}</td><td class="{{'active' if l.ok else 'suspended'}}">{{'ok' if l.ok else 'failed'}}</td></tr>{% else %}<tr><td>None.</td></tr>{% endfor %}</table></div>
+<div class="card wrap"><h3>Notifications sent to this user</h3><table>{% for n in notes %}<tr><td>{{(n.created|ist).strftime('%d %b %H:%M')}}</td><td>{{n.kind}}</td><td style="white-space:normal">{{n.message}}</td></tr>{% else %}<tr><td class="mut">None.</td></tr>{% endfor %}</table></div>{% endblock %}

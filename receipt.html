@@ -1,0 +1,3 @@
+{% extends "base.html" %}{% block c %}<div class="card" style="max-width:480px;margin:auto"><h2>Receipt #{{s.id}}</h2>
+<p>Billed to: {{buyer.name}} ({{buyer.email}})</p><p>Plan: <b>{{plan.name}}</b></p><p>Period: {{(s.start|ist).strftime('%d %b %Y')}} – {{(s.end|ist).strftime('%d %b %Y') if s.end else 'Lifetime'}}</p>
+<p>Amount: <b>{{s.price_paid|rs}}</b></p><button onclick="window.print()">Print</button></div>{% endblock %}

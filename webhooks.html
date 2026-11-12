@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block c %}<h2>Webhooks</h2>
+{% if newsecret %}<div class="card" style="border-color:var(--gold)"><b>Signing secret — copy now, shown only once.</b><code id="ws">{{newsecret}}</code><button onclick="navigator.clipboard.writeText(document.getElementById('ws').innerText);this.innerText='Copied'">Copy</button></div>{% endif %}
+<form class="card" method="post" action="/webhooks/save"><input type="hidden" name="csrf" value="{{csrf}}">
+<label>Webhook URL (public https)</label><input name="url" required value="{{ep.url if ep}}" placeholder="https://yoursite.com/payment-gateway-webhook">
+<div class="row"><div style="flex:1"><label>Max retries</label><input type="number" name="max_retries" min="1" max="10" value="{{ep.max_retries if ep else 5}}"></div>
+<div style="flex:1"><label>Status</label><select name="enabled"><option value="1">Enabled</option><option value="0" {{'selected' if ep and not ep.enabled}}>Disabled</option></select></div></div><button>Save</button></form>
+{% if ep %}<div class="row" style="margin-bottom:14px"><form method="post" action="/webhooks/test"><input type="hidden" name="csrf" value="{{csrf}}"><button class="btn2">Send test event</button></form>
+<form method="post" action="/webhooks/regenerate" onsubmit="return confirm('Old secret stops working. Continue?')"><input type="hidden" name="csrf" value="{{csrf}}"><button class="danger">Regenerate secret</button></form></div>{% endif %}
+<div class="card wrap"><h3>Delivery history</h3><table><tr><th>Event</th><th>Event ID</th><th>Status</th><th>Tries</th><th>HTTP</th><th>Error</th><th></th></tr>
+{% for d in ds %}<tr><td>{{d.event}}</td><td>{{d.event_id}}</td><td class="{{'SUCCESS' if d.status=='DELIVERED' else ('FAILED' if d.status=='FAILED' else 'PENDING')}}">{{d.status}}</td><td>{{d.attempts}}</td><td>{{d.last_code or '-'}}</td><td>{{d.last_error}}</td>
+<td>{% if d.status=='FAILED' %}<form method="post" action="/webhooks/{{d.id}}/retry"><input type="hidden" name="csrf" value="{{csrf}}"><button class="btn2" style="padding:4px 10px">Retry</button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan=7 style="color:var(--mut)">No deliveries yet.</td></tr>{% endfor %}</table></div>{% endblock %}

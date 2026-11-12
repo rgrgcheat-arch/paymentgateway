@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block c %}<h2>{{'Sellers & Resellers' if user.role=='owner' else 'My resellers'}}</h2>
+<form class="card" method="post" action="/team/create"><input type="hidden" name="csrf" value="{{csrf}}"><h3>Create account</h3>
+<label>Name</label><input name="name" required><label>Username</label><input name="username" required><label>Email</label><input type="email" name="email" required><label>Phone</label><input name="phone" required>
+<label>Temporary password (8+)</label><input type="password" name="password" required>
+{% if user.role=='owner' %}<label>Role</label><select name="role"><option value="seller">Seller</option><option value="reseller">Reseller</option></select>{% endif %}<button>Create</button></form>
+<div class="card wrap"><table><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Paid txns</th><th>Volume</th><th></th></tr>
+{% for r in rows %}{% set s=st.get(r.id,(0,0)) %}<tr><td>{{r.name}}</td><td>{{r.username}}</td><td>{{r.role}}</td><td class="{{r.status}}">{{r.status}}</td><td>{{s[0]}}</td><td>{{s[1]|rs}}</td>
+<td><div class="row" style="flex-wrap:nowrap"><form method="post" action="/team/{{r.id}}/toggle"><input type="hidden" name="csrf" value="{{csrf}}"><button class="btn2" style="padding:4px 10px">{{'Suspend' if r.status=='active' else 'Activate'}}</button></form>
+<form method="post" action="/team/{{r.id}}/delete" onsubmit="return confirm('Delete permanently?')"><input type="hidden" name="csrf" value="{{csrf}}"><button class="danger" style="padding:4px 10px">Delete</button></form></div></td></tr>
+{% else %}<tr><td colspan=7 style="color:var(--mut)">Nobody yet.</td></tr>{% endfor %}</table></div>{% endblock %}

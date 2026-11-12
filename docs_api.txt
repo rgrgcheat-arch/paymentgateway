@@ -1,0 +1,276 @@
+=====================================================================
+ PAYMENT GATEWAY - API DOCUMENTATION  (plain text, AI-ready)
+ Base URL: {{base}}
+=====================================================================
+
+----- FOR THE AI ASSISTANT READING THIS FILE ---------------------------
+You are integrating the payment gateway described below into the user's
+website / app / bot. Read the whole file, then write real working code.
+
+The user will tell you WHICH GATEWAY to use:
+  - "paytm"  -> set  gateway = "paytm"   (ignore every FamPay detail)
+  - "fampay" -> set  gateway = "fampay"  (ignore every Paytm detail)
+If the user did not say, ask which one. Always send the "gateway" field
+explicitly. Never expose the API key in browser JavaScript or in a
+mobile app: call this API from the user's SERVER only.
+-----------------------------------------------------------------------
+
+
+1. HOW IT WORKS
+---------------
+ 1) Your server creates a payment (amount + your own order_id).
+ 2) You get back a payment_url (hosted QR page), a QR image URL and the
+    upi_uri string (to draw your own QR).
+ 3) The customer scans the QR and pays with any UPI app.
+ 4) This gateway verifies the payment automatically with the provider
+    and marks the order SUCCESS only when order id and amount match.
+ 5) We send a signed webhook to your server. You can also poll verify.
+ 6) Deliver the product ONLY after a verified webhook or verify = success.
+
+Never trust a redirect, a screenshot or a user-entered UTR.
+
+
+2. QUICK START
+--------------
+ a) Register, open "Gateways", save your gateway setup:
+      Paytm  : Shop Name + UPI ID + MID
+      FamPay : Shop Name + UPI ID + Gmail + Gmail App Password
+    Press "Test: pay Rs 1 (QR)" and pay it. If the page shows
+    "Payment Successful", the gateway works.
+ b) Open "API Keys" and create a key (shown once, copy it).
+ c) Call the API from your server (examples in section 12).
+
+
+3. CHOOSING THE GATEWAY
+-----------------------
+ Send   "gateway": "paytm"   or   "gateway": "fampay"   when creating.
+ (GET style: &gateway=paytm  or  &gateway=fampay)
+ If you omit it, the first enabled gateway of the merchant is used
+ (FamPay first, then Paytm). Always send it explicitly.
+
+ PAYTM
+   - Setup needs only: Shop Name, UPI ID, MID.
+   - Customer pays the exact amount. Order ids look like PTM2026...
+   - Verified automatically through Paytm.
+
+ FAMPAY
+   - Setup needs: Shop Name, UPI ID, Gmail linked with FamPay,
+     Gmail App Password (16 digits, 2-step verification + IMAP on).
+   - To tell payments apart, FamPay amounts get a unique paise
+     adjustment (+0.00 to +0.99). Example: you ask for 99.00, the
+     response may say amount = 99.37. The customer MUST pay exactly
+     the "amount" returned in the response. Show that amount to the
+     customer and compare webhooks against that returned amount.
+   - Verified from the bank credit email in the merchant's Gmail, so
+     it can take a few seconds up to about a minute after payment.
+
+ Your plan must include the gateway you use, otherwise the API returns
+ 403 "Gateway not included in your plan".
+
+
+4. AUTHENTICATION
+-----------------
+ Send your API key in ONE of these ways:
+   Header   X-API-Key: YOUR_KEY
+   Header   Authorization: Bearer YOUR_KEY
+   Query    ?api_key=YOUR_KEY          (simple GET endpoints only)
+ Limit: 60 requests per minute per key.
+
+
+5. CREATE A PAYMENT
+-------------------
+ 5a) JSON (recommended)
+   POST {{base}}/api/v1/payment/create
+   Headers: X-API-Key: YOUR_KEY , Content-Type: application/json
+   Body:
+     {"amount": 99, "order_id": "ORDER10001", "gateway": "paytm",
+      "customer": {"name": "Ravi"}}
+
+   Fields:
+     amount     required  rupees, number (1 to 100000)
+     order_id   optional  YOUR order id. Same order_id again returns the
+                          same payment (safe to retry).
+     gateway    "paytm" or "fampay"
+     customer   optional  any small JSON object
+
+   Response:
+     {"success": true,
+      "order_id": "ORDER10001",
+      "pay_id": "PTM20261110....",
+      "status": "PENDING",
+      "amount": 99.0,
+      "currency": "INR",
+      "gateway": "paytm",
+      "transaction_id": "",
+      "payment_url": "{{base}}/pay/PTM20261110....",
+      "qr_url": "{{base}}/pay/PTM20261110..../qr.svg",
+      "qr_png_url": "{{base}}/pay/PTM20261110..../qr.png",
+      "upi_uri": "upi://pay?pa=...",
+      "expires_at": "2026-11-10T12:10:00Z"}
+
+   payment_url  hosted page with QR, flips to "Payment Successful".
+   qr_png_url   PNG image (use this for Telegram / WhatsApp bots).
+   qr_url       SVG image (use this on websites).
+   upi_uri      raw UPI string if you want to draw your own QR.
+   Each payment expires after 10 minutes.
+
+ 5b) Simple GET
+   GET {{base}}/api/create_order.php?amount=99&order_id=MY1&gateway=paytm&api_key=YOUR_KEY
+   Response: {"status":"success","data":{ ...same fields as above... }}
+
+
+6. CHECK PAYMENT STATUS
+-----------------------
+   GET  {{base}}/api/v1/payment/status/ORDER10001      (header X-API-Key)
+   POST {{base}}/api/v1/payment/verify  {"order_id":"ORDER10001"}
+   GET  {{base}}/api/verify.php?order_id=ORDER10001&api_key=YOUR_KEY
+
+   verify.php paid   : {"status":"success","data":{"order_id":"..",
+                         "amount":99.0,"utr":"..","payment_time":".."}}
+   verify.php unpaid : {"status":"pending|failed|expired","data":null}
+
+ order_id can be YOUR order_id or the pay_id.
+ Poll every 3-5 seconds while the customer is paying, or just use the
+ webhook.
+
+
+7. STATUSES
+-----------
+   PENDING         waiting for the customer to pay
+   SUCCESS         paid and verified (the ONLY status that means paid)
+   FAILED          the provider reported a failed payment
+   EXPIRED         not paid within 10 minutes
+   REFUND_PENDING / REFUNDED   refund in progress / done
+
+
+8. WEBHOOKS
+-----------
+ Set your https URL in the dashboard under "Webhooks". Copy the signing
+ secret shown there.
+
+ Events: payment.success, payment.failed, payment.expired,
+         payment.refunded, webhook.test
+ Headers sent to you:
+   X-Payment-Gateway-Timestamp: unix seconds
+   X-Payment-Gateway-Signature: sha256=HEX
+ Signature = HMAC_SHA256(secret, timestamp + "." + rawBody)  (hex)
+
+ Rules:
+   - Use the RAW request body for the signature, not re-encoded JSON.
+   - Reject if the timestamp is older than 5 minutes.
+   - Compare signatures in constant time.
+   - Deduplicate on event_id (the same event can be delivered twice).
+   - Reply with any 2xx status. Failed deliveries are retried.
+
+ Payload:
+   {"event":"payment.success",
+    "event_id":"PTM2026....:payment.success",
+    "order_id":"ORDER10001","pay_id":"PTM2026....",
+    "transaction_id":"123456789012","amount":99.0,
+    "currency":"INR","status":"SUCCESS","gateway":"paytm"}
+
+ Before delivering the product check: status == SUCCESS and
+ amount == the amount returned when you created the payment.
+
+
+9. REFUND
+---------
+ UPI QR payments cannot be refunded automatically. Refund the customer
+ manually from your UPI app. (POST /api/v1/payment/refund exists but
+ only works when the provider supports refunds for your setup.)
+
+
+10. HOSTED CHECKOUT (no code)
+-----------------------------
+ Send the customer to:
+   {{base}}/checkout.php?amount=99&order_id=MY1&gateway=paytm&api_key=YOUR_KEY
+ This link contains your key: create it on your server, never put it in
+ public HTML.
+
+
+11. ERRORS
+----------
+ Errors look like {"success":false,"error":"message"}
+   400  bad request (missing/invalid amount, gateway not configured)
+   401  invalid API key
+   403  plan does not include this gateway / monthly limit reached /
+        account suspended
+   404  order not found
+   429  rate limit (60/min) or too many pending payments
+   502  the provider could not be reached; retry shortly
+
+
+12. CODE EXAMPLES  (replace GATEWAY with "paytm" or "fampay")
+--------------------------------------------------------------
+ --- Python (Flask) ---
+ import hmac, hashlib, time, requests
+ from flask import Flask, request, abort
+ BASE = "{{base}}"; KEY = "YOUR_KEY"; SECRET = "WEBHOOK_SECRET"
+ GATEWAY = "paytm"            # or "fampay"
+ app = Flask(__name__)
+
+ def create_payment(amount, order_id):
+     r = requests.post(BASE + "/api/v1/payment/create",
+         headers={"X-API-Key": KEY},
+         json={"amount": amount, "order_id": order_id, "gateway": GATEWAY},
+         timeout=20)
+     r.raise_for_status()
+     return r.json()          # use payment_url, qr_png_url, amount
+
+ @app.post("/payment-webhook")
+ def webhook():
+     ts = request.headers.get("X-Payment-Gateway-Timestamp", "0")
+     sig = request.headers.get("X-Payment-Gateway-Signature", "")
+     body = request.get_data(as_text=True)
+     exp = "sha256=" + hmac.new(SECRET.encode(), (ts + "." + body).encode(),
+                                hashlib.sha256).hexdigest()
+     if abs(time.time() - int(ts)) > 300 or not hmac.compare_digest(exp, sig):
+         abort(401)
+     d = request.get_json()
+     if d["event"] == "payment.success" and d["status"] == "SUCCESS":
+         pass   # deliver the order ONCE per d["event_id"]
+     return "ok"
+
+ --- PHP ---
+ $ch = curl_init("$BASE/api/v1/payment/create");
+ curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_POST=>true,
+   CURLOPT_HTTPHEADER=>["X-API-Key: $KEY","Content-Type: application/json"],
+   CURLOPT_POSTFIELDS=>json_encode(["amount"=>100,"order_id"=>"ORDER10001","gateway"=>"paytm"])]);
+ $res = json_decode(curl_exec($ch), true);
+ header("Location: ".$res["payment_url"]);
+ // webhook:
+ // $body = file_get_contents("php://input");
+ // $ts = $_SERVER["HTTP_X_PAYMENT_GATEWAY_TIMESTAMP"];
+ // $exp = "sha256=".hash_hmac("sha256", "$ts.$body", $SECRET);
+ // if (!hash_equals($exp, $_SERVER["HTTP_X_PAYMENT_GATEWAY_SIGNATURE"])) { http_response_code(401); exit; }
+
+ --- Node.js (18+, Express) ---
+ const crypto = require("crypto");
+ const r = await fetch(BASE + "/api/v1/payment/create", {
+   method: "POST",
+   headers: { "X-API-Key": KEY, "Content-Type": "application/json" },
+   body: JSON.stringify({ amount: 100, order_id: "ORDER10001", gateway: "paytm" }) });
+ const pay = await r.json();          // pay.payment_url
+ // webhook: use express.raw({type: "application/json"})
+ const ts = req.headers["x-payment-gateway-timestamp"];
+ const exp = "sha256=" + crypto.createHmac("sha256", SECRET)
+                               .update(ts + "." + req.body.toString()).digest("hex");
+ // compare with req.headers["x-payment-gateway-signature"] using crypto.timingSafeEqual
+
+ --- Telegram bot (python-telegram-bot v20) ---
+ async def buy(update, ctx):
+     p = create_payment(99, "TG-" + str(update.effective_user.id) + "-" + str(int(time.time())))
+     await update.message.reply_photo(p["qr_png_url"],
+         caption="Pay exactly Rs " + str(p["amount"]) + "\n" + p["payment_url"])
+     # deliver ONLY from the webhook or after verify returns success
+
+
+13. SECURITY CHECKLIST
+----------------------
+ - API key and webhook secret only on your server.
+ - Verify the webhook signature and the timestamp.
+ - Check amount and status before delivering.
+ - Make delivery idempotent (event_id / order_id).
+ - Use your own unique order_id for every purchase.
+ - Use https for your webhook URL.
+=====================================================================

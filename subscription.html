@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% block c %}
+<style>
+.pc{border-radius:24px;padding:20px}.pc h2{font-size:22px;margin:6px 0}.pc .big2{font-size:32px;font-weight:800;letter-spacing:-1px;margin:14px 0 4px}.pc .big2 small{font-size:13px;font-weight:600;color:var(--mut);letter-spacing:0}
+.ac{background:linear-gradient(135deg,#fde8f3,#f3ecff);}body.dk .ac{background:linear-gradient(135deg,#3a1a40,#2c1a52)}
+.pc ul{list-style:none;padding:0;margin:18px 0}.pc li{padding:5px 0;font-size:14px}.pc li::before{content:"✓";color:#10b981;font-weight:800;margin-right:14px}
+.hrs{float:right;padding:8px 16px;border-radius:99px;background:#d9f7ec;color:#0d9f6e;font-weight:800;letter-spacing:.1em;font-size:13px}
+.pc select{padding:12px 14px;border-radius:14px;font-size:15px;margin:6px 0 10px}.pc .pbtn{width:100%;padding:9px;border-radius:12px;font-size:14px;background:var(--card);color:var(--tx);border:1px solid var(--line)}.pc .pbtn:hover{background:var(--soft)}
+.pc .pbtn.pri{background:linear-gradient(135deg,#db2777,#f472b6);color:#fff;border:0}.pc .pbtn[disabled]{opacity:.5;cursor:not-allowed}
+.due{display:block;font-weight:700;color:var(--pk2);margin:0 0 8px;min-height:20px}.nt{color:var(--mut);font-size:14px;margin:0 0 12px}
+.ban{background:#fff3d6;color:#8a5a00;border-radius:18px;padding:14px 16px;margin-bottom:16px}body.dk .ban{background:#3d3217;color:#f3d38a}.ban a{font-weight:800}
+.rt{margin:4px 0 0;font-size:14px}.rt b{display:block;font-size:20px;margin:2px 0}
+</style>
+{% if owner %}<div class="card"><h3>Owner account</h3><p class="mut">The owner has full access to every gateway. Set plan prices, the free trial and broadcasts from the Owner Panel.</p><a class="btn" href="/admin/subscriptions">Plans &amp; pricing</a></div>{% endif %}
+{% if pend %}<div class="ban">You have an unpaid plan order. <a href="/pay/{{pend.pay_id}}">Complete payment &rarr;</a></div>{% endif %}
+<div class="card pc ac">{% if sub %}<span class="pill SUCCESS">Active</span><h2>{{plan.name}}</h2><p class="mut" style="font-size:14px;margin:0 0 14px">{{desc}}</p>
+<p class="rt">{{left}}{% if sub.end %}<b>{{(sub.end|ist).strftime('%d %b %Y')}}</b>{% endif %}</p>
+{% if credit %}<p class="mut" style="margin:6px 0 0">Switching plans applies {{credit|rs}} credit for unused days.</p>{% endif %}
+{% else %}<span class="pill EXPIRED">No active plan</span><h2>{{ 'Plan expired' if last else 'Choose a plan' }}</h2>
+<p class="mut" style="font-size:14px;margin:0">{% if last %}Your plan ended on {{(last.end|ist).strftime('%d %b %Y')}}. Gateways are locked and automatic payment verification is off until you renew.{% else %}Buy a gateway plan below to unlock it. Only the gateway you buy will be visible in your account.{% endif %}</p>{% endif %}</div>
+
+{% for c in cards %}{% set p=c.p %}
+{% if c.trial %}<div class="card pc"><span class="hrs">{{p.hours or 12}} HOURS</span><h3 style="font-size:19px;margin:8px 0">{{p.name}}</h3>
+<div class="big2">{{p.price|rs}} <small>/ {{p.hours or 12}} hours</small></div><p class="mut" style="font-size:14px">0.00% per successful transaction</p>
+<ul>{% for f in c.feats %}<li>{{f}}</li>{% endfor %}</ul>
+<form method="post" action="/subscription/buy"><input type="hidden" name="csrf" value="{{csrf}}"><input type="hidden" name="plan_id" value="{{p.id}}"><button class="pbtn" {{'' if c.ok else 'disabled'}}>{{'Start free trial' if c.ok else (c.why or 'Not available')}}</button></form></div>
+{% else %}<div class="card pc" data-credit="{{c.credit}}"><h3 style="font-size:19px;margin:8px 0">{{p.name}}</h3>
+<div class="big2">{{(c.ten[0][1])|rs}} <small>starting price</small></div><p class="mut" style="font-size:14px">0.00% per successful transaction</p>
+<ul>{% for f in c.feats %}<li>{{f}}</li>{% endfor %}</ul>
+<form method="post" action="/subscription/buy"><input type="hidden" name="csrf" value="{{csrf}}"><input type="hidden" name="plan_id" value="{{p.id}}">
+<label><b>Tenure</b></label><select name="days" class="tn">{% for d,pr in c.ten %}<option value="{{d}}" data-p="{{pr}}">{{d}} days — {{pr|rs}}</option>{% endfor %}</select>
+<span class="due"></span>{% if c.note %}<p class="nt">{{c.note}}</p>{% endif %}
+<button class="pbtn {{'pri' if not sub or c.renew}}">{{c.mode}}</button></form></div>{% endif %}
+{% endfor %}
+{% if not cards %}<div class="card"><p class="mut">No plans are available right now.</p></div>{% endif %}
+
+<div class="card wrap"><h3>History</h3><table><tr><th>Plan</th><th>Start</th><th>End</th><th>Paid</th><th>Status</th><th></th></tr>
+{% for h in hist %}<tr><td>{{plans[h.plan_id].name}}</td><td>{{(h.start|ist).strftime('%d %b %Y')}}</td><td>{{(h.end|ist).strftime('%d %b %Y %H:%M') if h.end else '-'}}</td><td>{{h.price_paid|rs}}</td><td>{{h.status}}</td><td><a href="/subscription/{{h.id}}/receipt">Receipt</a></td></tr>
+{% else %}<tr><td colspan=6 class="mut">No subscriptions yet.</td></tr>{% endfor %}</table></div>
+<script>
+document.querySelectorAll('.pc[data-credit]').forEach(function(card){var cr=+card.dataset.credit,sel=card.querySelector('.tn'),du=card.querySelector('.due');if(!sel)return;
+function f(v){return '₹'+(v/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function u(){var lp=+sel.options[sel.selectedIndex].dataset.p;if(!cr){du.textContent='';return}var pay=Math.max(0,lp-cr);if(pay>0&&pay<100)pay=100;du.textContent=pay?('You pay '+f(pay)+' after '+f(cr)+' credit'):('Covered by your '+f(cr)+' credit')}
+sel.onchange=u;u()});
+</script>{% endblock %}

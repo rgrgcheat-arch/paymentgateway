@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% block c %}<p><a href="/admin">&larr; Owner Panel</a></p>
+<h2>Music</h2>
+<form class="card" method="post" action="/admin/music/upload" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{{csrf}}">
+<h3>Add a track</h3>
+<label>Track name</label><input name="title" maxlength="120" placeholder="Shown in the player bar">
+<label>Audio file (mp3, m4a, aac, ogg, wav, flac · max {{max_mb}} MB)</label><input type="file" name="file" accept="audio/*,.mp3,.m4a,.aac,.ogg,.wav,.flac,.opus" required>
+<button>Upload</button>
+<p class="mut" style="font-size:13px;margin:10px 0 0">{{rows|length}} of {{max_tracks}} tracks used. Tracks play for every signed-in user, in the order shown below, then start again from the first.</p></form>
+<div class="card wrap"><h3>All tracks</h3>
+<table><tr><th>#</th><th>Name</th><th>Size</th><th>Status</th><th>Preview</th><th>Order</th><th></th></tr>
+{% for r in rows %}<tr><td>{{loop.index}}</td>
+<td><form method="post" action="/admin/music/{{r.id}}/rename" class="row" style="flex-wrap:nowrap"><input type="hidden" name="csrf" value="{{csrf}}"><input name="title" value="{{r.title}}" maxlength="120" style="margin:0;min-width:160px"><button class="btn2">Save</button></form></td>
+<td>{{'%.1f'|format(r.size/1048576)}} MB</td>
+<td class="{{'active' if r.active else 'suspended'}}">{{'ON' if r.active else 'OFF'}}</td>
+<td><audio controls preload="none" src="/music/{{r.id}}/file" style="height:32px;max-width:220px"></audio></td>
+<td><div class="row" style="flex-wrap:nowrap">
+<form method="post" action="/admin/music/{{r.id}}/move"><input type="hidden" name="csrf" value="{{csrf}}"><input type="hidden" name="d" value="up"><button class="btn2" {% if loop.first %}disabled{% endif %}>↑</button></form>
+<form method="post" action="/admin/music/{{r.id}}/move"><input type="hidden" name="csrf" value="{{csrf}}"><input type="hidden" name="d" value="down"><button class="btn2" {% if loop.last %}disabled{% endif %}>↓</button></form></div></td>
+<td><div class="row" style="flex-wrap:nowrap">
+<form method="post" action="/admin/music/{{r.id}}/toggle"><input type="hidden" name="csrf" value="{{csrf}}"><button class="btn2">{{'Turn off' if r.active else 'Turn on'}}</button></form>
+<form method="post" action="/admin/music/{{r.id}}/delete" onsubmit="return confirm('Delete this track?')"><input type="hidden" name="csrf" value="{{csrf}}"><button class="danger">Delete</button></form></div></td></tr>
+{% else %}<tr><td colspan="7" class="mut">No tracks yet. Add one above.</td></tr>{% endfor %}</table></div>{% endblock %}

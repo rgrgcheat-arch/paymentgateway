@@ -1,0 +1,63 @@
+{% extends "base.html" %}{% block c %}
+<style>
+.gc{border:1px solid var(--line);border-left:4px solid var(--pur);border-radius:18px;padding:14px;margin-top:16px;background:var(--card)}
+.gh{display:flex;align-items:center;gap:14px}.gi{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#db2777,#a855f7);color:#fff;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;flex:none}
+.gh h3{margin:0}.gh small{color:var(--mut);font-size:13px}.gh .pill{margin-left:auto}
+.kv2{border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-top:8px;background:var(--card)}.kv2 small{display:block;letter-spacing:.1em;color:var(--mut);font-weight:700;font-size:12px;text-transform:uppercase}.kv2 b{font:600 14px ui-monospace,Menlo,monospace;word-break:break-all;font-weight:600}
+.gb{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.gb form{margin:0;flex:1 1 auto}.gb a,.gb button{display:block;width:100%;text-align:center;padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--tx);font-weight:600;font-size:14px}
+.gb .t{background:var(--soft);color:var(--pk2);border-color:#f3b6d6}.gb .d{background:#fde4e8;color:#e0364f;border-color:#fbc9d3}
+.prow{display:flex;gap:10px;align-items:stretch}.prow input{margin:0;flex:1}.prow button{background:var(--soft);color:var(--pk2);border:1px solid #f3b6d6;border-radius:12px;padding:0 14px;font-size:13px;font-weight:600}
+.gnote{background:var(--soft);border:1px solid #f3b6d6;color:var(--pk2);border-radius:12px;padding:10px 12px;font-size:13px;margin:10px 0}.hint{color:var(--mut);font-size:14px;margin:-6px 0 12px}
+.chk{display:flex;gap:12px;align-items:center;margin:10px 0}.chk input{width:24px;height:24px;margin:0;accent-color:var(--pur)}
+.gfield{display:none}.gfield.on{display:block}
+</style>
+{% if not al %}<div class="card" style="background:#fff3d6;color:#8a5a00;border-color:#f3d38a"><b>No gateway unlocked.</b> Buy a plan (or start the free trial) to unlock the gateway you need. Only the gateway you buy appears here. <a href="/subscription" style="font-weight:800">Open Subscriptions &rarr;</a></div>
+{% else %}<div class="card" style="padding:12px 16px"><span class="mut">Plan: <b>{{plan.name}}</b> · unlocked: <b>{% for g in al %}{{ 'Paytm' if g=='paytm' else 'FamPay' }}{{ ', ' if not loop.last }}{% endfor %}</b></span></div>{% endif %}
+<div class="card"><h3 style="margin-bottom:4px">Payment gateways</h3>
+<p class="mut" style="margin:0 0 6px">Connect your unlocked gateway. Your details are encrypted before they are stored, and QR generation and payment verification are handled by this site.</p>
+<b style="color:var(--pk2)">{{creds|length}} configured{% if default %} · default: {{default|capitalize}}{% endif %}</b>
+
+{% for g, c in creds.items() %}{% set d = cfgs.get(g, {}) %}
+<div class="gc"><div class="gh"><span class="gi">{{g[0]|upper}}</span><div><h3>{{'Paytm' if g=='paytm' else 'FamPay'}}</h3><small>{{'Primary' if g==default else 'Secondary'}}</small></div><span class="pill {{'SUCCESS' if c.enabled else 'EXPIRED'}}">{{'Active' if c.enabled else 'Paused'}}</span></div>
+<div class="kv2"><small>Your shop name</small><b>{{d.get('shop') or '—'}}</b></div>
+<div class="kv2"><small>UPI ID</small><b>{{d.get('upi') or '—'}}</b></div>
+{% if g=='paytm' %}<div class="kv2"><small>MID</small><b>{{d.get('mid') or '—'}}</b></div>{% else %}<div class="kv2"><small>Linked Gmail</small><b>{{d.get('gmail') or '—'}}</b></div><div class="kv2"><small>Gmail app password</small><b>•••• saved (encrypted)</b></div>{% endif %}
+<div class="kv2"><small>Credentials</small><b>Encrypted by site</b></div>
+<div class="kv2"><small>Auto verification</small><b>{% if c.last_test_at %}<span class="{{'ok' if c.last_test_ok else 'FAILED'}}">{{c.last_test_msg}}</span>{% else %}Not checked yet{% endif %}</b>
+<form method="post" action="/gateways/{{g}}/test" style="margin-top:8px"><input type="hidden" name="csrf" value="{{csrf}}"><button class="btn2" style="padding:6px 14px">{{'Check setup' if g=='paytm' else 'Test Gmail'}}</button></form></div>
+{% if g==default %}<div style="margin-top:14px"><span class="pill" style="background:var(--soft);color:var(--pk2)">Default checkout gateway</span></div>{% endif %}
+<div class="gb"><form><a href="/gateways?edit={{g}}#form">Edit</a></form>
+<form method="post" action="/gateways/{{g}}/testpay"><input type="hidden" name="csrf" value="{{csrf}}"><button class="t">Test {{'Paytm' if g=='paytm' else 'FamPay'}} (₹1)</button></form>
+<form method="post" action="/gateways/{{g}}/{{'disable' if c.enabled else 'enable'}}"><input type="hidden" name="csrf" value="{{csrf}}"><button>{{'Pause' if c.enabled else 'Resume'}}</button></form>
+<form method="post" action="/gateways/{{g}}/delete" onsubmit="return confirm('Delete this gateway setup permanently?')"><input type="hidden" name="csrf" value="{{csrf}}"><button class="d">Delete</button></form></div></div>
+{% else %}<p class="mut" style="margin-top:16px">{{ "No gateway set up yet. Add one below." if al else "Locked until you buy a plan." }}</p>{% endfor %}</div>
+
+{% if al %}<div class="card" id="form"><h2 style="margin-bottom:4px">{{'Edit gateway' if edit else 'Add a gateway'}}</h2><p class="mut" style="margin-top:0">Gateway secrets are encrypted before they are stored.</p>
+{% set ed = cfgs.get(edit, {}) if edit else {} %}
+<form method="post" id="gf" action="/gateways/paytm/save"><input type="hidden" name="csrf" value="{{csrf}}">
+<label><b>Provider</b></label><select id="prov">{% if 'paytm' in al %}<option value="paytm" {{'selected' if edit=='paytm'}}>Paytm</option>{% endif %}{% if 'fampay' in al %}<option value="fampay" {{'selected' if edit=='fampay'}}>FamPay</option>{% endif %}</select>
+
+<div class="gfield" data-g="paytm"><label><b>Your shop name</b></label><div class="prow"><input name="shop" required maxlength="60" value="{{ed.get('shop','') if edit=='paytm'}}" placeholder="Your shop name"><button type="button" class="pst">Paste</button></div>
+<p class="hint">Shown as the payee for your QR payments, for example the name of your shop or business.</p>
+<label><b>UPI ID</b></label><div class="prow"><input name="upi" required value="{{ed.get('upi','') if edit=='paytm'}}" placeholder="merchant@paytm"><button type="button" class="pst">Paste</button></div>
+<label style="margin-top:12px;display:block"><b>MID</b></label><div class="prow"><input name="mid" required value="{{ed.get('mid','') if edit=='paytm'}}" placeholder="MERCHANT12345678"><button type="button" class="pst">Paste</button></div>
+<div class="gnote">Enter your Paytm UPI ID and MID. QR generation and verification are handled by this site.</div></div>
+
+<div class="gfield" data-g="fampay"><label><b>Your shop name</b></label><div class="prow"><input name="shop" required maxlength="60" value="{{ed.get('shop','') if edit=='fampay'}}" placeholder="Your shop name"><button type="button" class="pst">Paste</button></div>
+<p class="hint">Type your own shop or business name. It is shown to customers when they pay.</p>
+<label><b>UPI ID</b></label><div class="prow"><input name="upi" required value="{{ed.get('upi','') if edit=='fampay'}}" placeholder="1234567890@fam"><button type="button" class="pst">Paste</button></div>
+<label style="margin-top:12px;display:block"><b>Gmail linked with FamPay</b></label><div class="prow"><input name="gmail" type="email" required value="{{ed.get('gmail','') if edit=='fampay'}}" placeholder="you@gmail.com"><button type="button" class="pst">Paste</button></div>
+<label style="margin-top:12px;display:block"><b>Gmail app password</b> {% if edit=='fampay' %}<span class="mut">(leave blank to keep the saved one)</span>{% endif %}</label><div class="prow"><input name="app_password" type="password" autocomplete="off" {{'' if edit=='fampay' else 'required'}} placeholder="{{'•••• already saved' if edit=='fampay' else '16 digit app password'}}"><button type="button" class="pst">Paste</button></div>
+<div class="gnote">Gmail needs 2-step verification and IMAP turned on. Payments are verified from the bank credit email, so it can take a few seconds up to a minute.</div></div>
+
+<label class="chk"><input type="checkbox" name="enable" value="1" {{'checked' if (not edit) or creds.get(edit).enabled}}> Enable this gateway</label>
+<button class="wide" style="margin-top:8px">{{'Save changes' if edit else 'Add gateway'}}</button></form></div>
+{% endif %}
+{% if al %}<script>
+(function(){var prov=document.getElementById('prov'),f=document.getElementById('gf');
+function sw(){var g=prov.value;f.action='/gateways/'+g+'/save';document.querySelectorAll('.gfield').forEach(function(b){var on=b.dataset.g===g;b.classList.toggle('on',on);b.querySelectorAll('input').forEach(function(i){i.disabled=!on})})}
+prov.onchange=sw;sw();
+document.querySelectorAll('.pst').forEach(function(b){b.onclick=async function(){try{var t=await navigator.clipboard.readText();b.parentNode.querySelector('input').value=t.trim()}catch(e){alert('Allow clipboard access, or paste into the field manually.')}}});
+if(location.hash==='#form')document.getElementById('form').scrollIntoView();
+})();
+</script>{% endif %}{% endblock %}

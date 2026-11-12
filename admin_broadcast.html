@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block c %}<p><a href="/admin">&larr; Owner Panel</a></p>
+<form class="card" method="post" action="/admin/broadcast" onsubmit="return confirm('Send this message now?')"><input type="hidden" name="csrf" value="{{csrf}}"><h3>New broadcast</h3>
+<p class="mut" style="margin-top:0">Appears in every selected user's notification bell (🔔) and Notifications page.</p>
+<label>Send to</label><select name="audience">{% for k,v in aud %}<option value="{{k}}">{{v}} ({{counts[k]}})</option>{% endfor %}</select>
+<label>Message (max 300 characters)</label><textarea name="message" maxlength="300" required rows="4" placeholder="e.g. Maintenance tonight 1 AM - 2 AM. Payments may be slow." style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--soft);color:var(--tx);font:inherit;margin:4px 0 12px"></textarea>
+<button class="wide">Send broadcast</button></form>
+<div class="card wrap"><h3>Sent broadcasts</h3><table><tr><th>Time</th><th>Audience</th><th>Users</th><th>Message</th></tr>
+{% for b in rows %}<tr><td>{{(b.created|ist).strftime('%d %b %H:%M')}}</td><td>{{b.audience}}</td><td>{{b.count}}</td><td style="white-space:normal">{{b.message}}</td></tr>{% else %}<tr><td colspan="4" class="mut">None yet.</td></tr>{% endfor %}</table></div>{% endblock %}

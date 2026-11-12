@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block c %}
+<form class="card tfilter" method="get" action="/transactions">
+<div class="sbox"><span>⌕</span><input name="search" placeholder="Search order, customer, UTR..." value="{{f.search}}"></div>
+<select name="status" onchange="this.form.submit()"><option value="">All</option>{% for s in ['SUCCESS','PENDING','FAILED','EXPIRED','REFUND_PENDING','REFUNDED'] %}<option value="{{s}}" {{'selected' if f.status==s}}>{{s|replace('_',' ')|capitalize}}</option>{% endfor %}</select>
+<input type="hidden" name="gateway" value="{{f.gateway}}">
+<a class="btn wide" href="/transactions/new">+ New payment</a>
+<a class="exp" href="/transactions/export.csv?status={{f.status}}&gateway={{f.gateway}}&search={{f.search}}">Export CSV</a></form>
+<div class="card tl">
+{% for t in rows %}
+<div class="tr"><div class="l"><div class="oid">{{t.pay_id}}</div><div class="sub">{{t.merchant_order_id or '—'}}</div><div class="sub">{{(t.created|ist).strftime('%d %b, %H:%M')}} · {{t.gateway}}</div></div>
+<div class="r"><div class="amt">{{t.amount|rs}}</div><span class="pill {{t.status}}">{{t.status|replace('_',' ')|capitalize}}</span><a href="/pay/{{t.pay_id}}">Open ↗</a>
+{% if t.status=='SUCCESS' %}<form method="post" action="/transactions/{{t.pay_id}}/refund" onsubmit="return confirm('Refund this payment? Leave amount blank for full refund.')" class="rf"><input type="hidden" name="csrf" value="{{csrf}}"><input name="amount" placeholder="full"><button class="btn2">Refund</button></form>{% endif %}</div></div>
+{% else %}<p class="mut" style="padding:20px">Nothing found.</p>{% endfor %}</div>{% endblock %}

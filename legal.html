@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block c %}<div class="card" style="max-width:640px;margin:18px auto">
+{% if kind=='terms' %}<h2>Terms of Service</h2>
+<p>By creating an account you agree to use PAYMENT GATEWAY only for lawful payment collection, to keep your login and API keys secret, and to provide correct business details.</p>
+<p>Subscription plans unlock the payment gateway they name for the chosen period. Plans expire automatically when the period ends; unused days are credited when you switch plans. The free trial is one-time per account.</p>
+<p>The service is provided as-is. We may suspend accounts that break these terms.</p>
+{% else %}<h2>Privacy Policy</h2>
+<p>We store the details you give us (business name, contact name, email, phone) and your activity on the platform (logins, payments, plan purchases) so we can run the service and keep it secure.</p>
+<p>Gateway credentials are encrypted before they are stored. We never store your password in readable form. We do not sell your data.</p>{% endif %}
+<p class="mut" style="font-size:13px">Placeholder text. Replace it with your own legal wording by editing <code style="display:inline;padding:1px 6px">templates/legal.html</code>.</p></div>{% endblock %}

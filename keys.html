@@ -1,0 +1,48 @@
+{% extends "base.html" %}{% block c %}
+<style>
+.kcard{border-radius:20px;padding:16px;color:#fff;background:linear-gradient(135deg,#9d174d,#db2777 55%,#f472b6);box-shadow:0 18px 40px rgba(219,39,119,.30);margin-top:14px}
+.kcard.off{filter:grayscale(.9) brightness(.8)}
+.kt{display:flex;justify-content:space-between;align-items:center;gap:10px}.chip{width:50px;height:34px;border-radius:9px;background:linear-gradient(135deg,#f0d78c,#c9a24a);flex:none}
+.kt b{letter-spacing:.16em;font-size:12px;flex:1}.live{border:1px solid #a7f3d0;color:#d1fae5;border-radius:99px;padding:4px 12px;font-weight:600;letter-spacing:.12em;font-size:11px}
+.kname{font-size:18px;font-weight:700;margin:16px 0 10px;text-transform:uppercase}
+.kbox{background:rgba(60,5,35,.45);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:10px 16px;font:13px ui-monospace,Menlo,monospace;overflow-x:auto;white-space:nowrap;letter-spacing:.04em;min-height:40px}
+.krow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.krow form{margin:0}
+.kcard button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:8px 10px;color:#fff;font-weight:600;font-size:13px;width:100%}
+.kcard button.rv{color:#fde68a}.kcard button.dl2{color:#fff}
+.kl{font-size:10.5px;letter-spacing:.12em;color:#fbcfe8;margin-top:14px}.kv{font-size:15px;font-weight:600;margin-top:2px}
+.k2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.klast{border-top:1px solid rgba(255,255,255,.18);margin-top:14px;padding-top:10px;color:#fce7f3;font-size:12px}
+.warn{background:#fff6e5;color:#9a5b0b;padding:10px 14px;border-radius:14px;font-size:13px;margin:10px 0 12px}body.dk .warn{background:#3a2d12;color:#f3c76b}
+.dis{opacity:.55;pointer-events:none}.livechip{display:inline-flex;align-items:center;gap:8px;color:var(--ok);font-weight:700;background:#d9f7ec;padding:6px 12px;border-radius:99px}
+</style>
+<div class="card"><h3 style="margin-bottom:2px">Live API cards</h3><p class="mut" style="margin:0 0 10px">Production credentials connected to your account</p><span class="livechip">● Live only</span>
+{% for k in keys %}
+<div class="kcard {{'off' if k.revoked}}">
+<div class="kt"><span class="chip"></span><b>PAYMENT GATEWAY API</b><span class="live">{{'REVOKED' if k.revoked else 'LIVE'}}</span></div>
+<div class="kname">{{k.label or 'API key'}}</div>
+<div class="kbox" id="kb{{k.id}}" data-mask="••••••••••••••••••••••••••••••••••••••••">{{'••••••••••••••••••••••••••••••••••••••••' if not k.revoked else k.prefix+'••••••••••••'}}</div>
+{% if not k.revoked %}<div class="krow"><button type="button" onclick="kShow({{k.id}},this)">Show</button><button type="button" onclick="kCopy({{k.id}},this)">Copy</button></div>{% endif %}
+<div class="kl">API HOLDER</div><div class="kv">{{user.name|upper}}</div>
+<div class="k2"><div><div class="kl">ISSUED</div><div class="kv">{{(k.created|ist).strftime('%m / %y')}}</div></div>
+<div><div class="kl">EXPIRES WITH PLAN</div><div class="kv">{{(sub.end|ist).strftime('%d / %m / %y') if sub and sub.end else 'No expiry'}}</div></div></div>
+<div class="klast">Last used: {{(k.last_used|ist).strftime('%d %b %Y, %H:%M') if k.last_used else 'never'}} · {{k.uses}} calls</div>
+<div class="krow">{% if not k.revoked %}<form method="post" action="/keys/{{k.id}}/revoke" onsubmit="return confirm('Revoke this key? Apps using it will stop working.')"><input type="hidden" name="csrf" value="{{csrf}}"><button class="rv">Revoke</button></form>{% else %}<div></div>{% endif %}
+<form method="post" action="/keys/{{k.id}}/delete" onsubmit="return confirm('Permanently delete this key?')"><input type="hidden" name="csrf" value="{{csrf}}"><button class="dl2">Delete</button></form></div>
+</div>
+{% else %}<p class="mut" style="margin-top:16px">No API key yet. Generate one below.</p>{% endfor %}</div>
+
+<div class="card"><h2 style="font-size:19px">Generate live API key</h2><p class="mut">One active key per account. Its expiry follows your current plan.</p>
+{% if active %}<div class="warn">Revoke or delete your current active key before generating another.</div>{% endif %}
+<form method="post" action="/keys/create" class="{{'dis' if active}}"><input type="hidden" name="csrf" value="{{csrf}}">
+<label><b>Shop name</b></label><input name="label" maxlength="60" required placeholder="Production server" {{'disabled' if active}}>
+<div class="card" style="background:#dff7ee;border-color:#bfeedd;display:flex;gap:12px;align-items:center;margin:0 0 12px;padding:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--ok)"></span><div><b style="color:var(--ok)">Live environment</b><br><small style="color:#3a5a4e">Real payment verification enabled</small></div></div>
+<button class="wide" {{'disabled' if active}}>Generate secure live key</button></form></div>
+<div class="card hl"><h3>Using your key</h3><p class="mut">Send it as the <code style="display:inline;padding:1px 6px">X-API-Key</code> header, as <code style="display:inline;padding:1px 6px">Authorization: Bearer KEY</code>, or as <code style="display:inline;padding:1px 6px">?api_key=KEY</code>. Keep it secret.</p><a href="/docs-api"><b>See API docs →</b></a></div>
+<div class="card hl"><h3>Key controls</h3><p class="mut" style="margin:0">Revoke keeps the card for audit history. Delete permanently removes the credential.</p></div>
+<script>
+const CSRF="{{csrf}}",shown={};
+async function kGet(id){const r=await fetch('/keys/'+id+'/reveal',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'csrf='+encodeURIComponent(CSRF)});const j=await r.json();if(!r.ok)throw new Error(j.detail||j.error||'Failed');return j.key}
+async function kShow(id,b){const el=document.getElementById('kb'+id);if(shown[id]){el.textContent=el.dataset.mask;shown[id]=0;b.textContent='Show';return}
+try{el.textContent=await kGet(id);shown[id]=1;b.textContent='Hide'}catch(e){alert(e.message)}}
+async function kCopy(id,b){try{const k=await kGet(id);try{await navigator.clipboard.writeText(k)}catch(_){const t=document.createElement('textarea');t.value=k;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}
+const o=b.textContent;b.textContent='Copied ✓';setTimeout(()=>b.textContent=o,1500)}catch(e){alert(e.message)}}
+</script>{% endblock %}

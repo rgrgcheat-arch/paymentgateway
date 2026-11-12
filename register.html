@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block c %}
+<style>
+.auth{max-width:400px;margin:14px auto;padding:24px 20px;border-radius:24px}
+.auth h1{font-size:26px;margin:0 0 4px;letter-spacing:-.5px}
+.auth .sub{color:var(--mut);font-size:14px;margin:0 0 16px}.auth .sub a{font-weight:700}
+.auth label{font-weight:700;font-size:13px;margin-top:6px;display:block}
+.auth input[type=text],.auth input[type=email],.auth input[type=tel],.auth input[type=password]{padding:12px 14px;border-radius:14px;font-size:15px;margin:6px 0 12px;background:#fff7fb}
+.pw{position:relative}.pw input{padding-right:84px!important}
+.pw .show{position:absolute;right:8px;top:50%;transform:translateY(-62%);background:#fff;border:1px solid var(--line);color:var(--pur);border-radius:12px;padding:8px 12px;font-weight:700}
+.rules{display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 14px}.rules span{font-size:12px;padding:3px 10px;border-radius:99px;background:var(--soft);color:var(--mut)}.rules span.y{background:#d9f7ec;color:#0d9f6e}
+.tk{display:flex;gap:12px;align-items:center;margin:6px 0 18px;color:var(--mut)}.tk input{width:24px;height:24px;margin:0;accent-color:var(--pur);flex:none}
+.auth .go{width:100%;padding:10px;border-radius:14px;font-size:15px;box-shadow:0 10px 22px rgba(236,72,153,.28)}
+</style>
+<div class="card auth"><h1>Create your account</h1>
+<p class="sub">Already registered? <a href="/login">Sign in</a>.</p>
+<form method="post" action="/register" id="rf"><input type="hidden" name="csrf" value="{{csrf}}">
+<label for="bn">Business name</label><input id="bn" type="text" name="business_name" required maxlength="120" placeholder="Your business" value="{{form.business_name if form}}" autocomplete="organization">
+<label for="nm">Contact name</label><input id="nm" type="text" name="name" required maxlength="120" placeholder="Your full name" value="{{form.name if form}}" autocomplete="name">
+<label for="em">Work email</label><input id="em" type="email" name="email" required placeholder="founder@business.com" value="{{form.email if form}}" autocomplete="email" autocapitalize="none">
+<label for="ph">Phone</label><input id="ph" type="tel" name="phone" required placeholder="10-digit mobile number" value="{{form.phone if form}}" autocomplete="tel" inputmode="tel">
+<label for="pw">Password</label><div class="pw"><input id="pw" type="password" name="password" required minlength="8" placeholder="8+ chars, uppercase, number" autocomplete="new-password"><button type="button" class="show" onclick="var i=document.getElementById('pw');var h=i.type=='password';i.type=h?'text':'password';this.innerText=h?'Hide':'Show'">Show</button></div>
+<div class="rules"><span id="r1">8+ characters</span><span id="r2">Uppercase</span><span id="r3">Number</span></div>
+<label class="tk"><input type="checkbox" name="terms" value="1" required> <span>I agree to the <a href="/terms" target="_blank">Terms</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.</span></label>
+<button class="go">Create account &rarr;</button></form></div>
+<script>
+(function(){var p=document.getElementById('pw');function c(){var v=p.value;[['r1',v.length>=8],['r2',/[A-Z]/.test(v)],['r3',/\d/.test(v)]].forEach(function(x){document.getElementById(x[0]).className=x[1]?'y':''})}p.oninput=c;c()})();
+</script>{% endblock %}

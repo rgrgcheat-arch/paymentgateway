@@ -1,0 +1,213 @@
+{% extends "base.html" %}{% block c %}
+<style>
+.dx h2{margin:0 0 4px}.dx .lead{color:var(--mut);margin:0 0 18px}
+.dx h3{display:flex;align-items:center;gap:10px}.dx h3 i{font-style:normal;background:var(--pur);color:#fff;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex:none}
+.dx p,.dx li{color:var(--mut)}.dx li{margin:4px 0}.dx b{color:var(--tx)}
+.dx .tg{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;margin-right:6px}
+.dx .get{background:#d9f7ec;color:#065f46}.dx .post{background:#fce7f3;color:#db2777}
+.dx table td,.dx table th{white-space:normal;vertical-align:top}
+.dx .two{display:grid;grid-template-columns:1fr;gap:14px}@media(min-width:800px){.dx .two{grid-template-columns:1fr 1fr}}
+.dx .note{background:#fff7e0;border:1px solid #f3dc9a;color:#6b4e00;border-radius:12px;padding:10px 12px;margin:10px 0}
+.dx .dl{display:block;text-align:center;font-size:17px;padding:14px 20px}
+
+.dx .tabs{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;margin-bottom:6px;scrollbar-width:none}.dx .tabs::-webkit-scrollbar{display:none}
+.dx .tab{flex:none;background:var(--card);border:1px solid var(--line);color:var(--mut);border-radius:18px;padding:16px 20px;font-size:16px;font-weight:500;cursor:pointer}
+.dx .tab.on{color:var(--tx);font-weight:700;box-shadow:0 6px 18px rgba(236,72,153,.15);border-color:#f3a8cf}
+.dx .pane{display:none}.dx .pane.on{display:block}
+.dx .pillb{display:inline-block;background:var(--soft);color:var(--pur);font-weight:700;padding:8px 16px;border-radius:99px;margin-bottom:14px}
+.dx .hero2 h1{font-size:34px;line-height:1.15;margin:0 0 14px;letter-spacing:-.5px}.dx .hero2 p{font-size:17px}
+.dx .hero2 .btn,.dx .hero2 .btn2{display:block;text-align:center;padding:15px;margin-top:12px;border-radius:999px;font-size:17px}
+.dx .btn2{border:1px solid var(--line);color:var(--tx);background:var(--card)}
+.dx .eyebrow{letter-spacing:.16em;font-weight:700;color:var(--mut);font-size:13px}.dx .url{font:19px ui-monospace,Menlo,monospace;color:var(--tx);word-break:break-all;margin:6px 0 12px}
+.dx .chip2{display:inline-block;padding:8px 14px;border-radius:99px;background:#d9f7ec;color:#0d9f6e;font-weight:600}.dx .chip2.w{background:#fff3d6;color:#b7791f}
+.dx .gen label{display:block;font-weight:700;color:var(--mut);margin-top:12px}.dx .gen select,.dx .gen textarea{padding:15px;font-size:16px;border-radius:18px}.dx .gen textarea{min-height:110px;resize:vertical}
+.dx .term{background:#2a0f2e;color:#fde7f3;border-radius:22px;overflow:hidden}.dx .term .th{padding:18px 18px 14px}.dx .term h3{color:#fff;margin:0 0 2px}.dx .term .sub{color:#d3a5d6;font-size:14px}
+.dx .term .brow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.dx .term .brow button{padding:14px;border-radius:16px;font-size:16px}.dx .term .brow .g{background:#3d1a42;border:1px solid #5b2a62}
+.dx .term pre{margin:0;border:0;border-radius:0;border-top:1px solid #4a2150;background:#2a0f2e;color:#fde7f3;padding:16px 18px;max-height:360px;overflow:auto;white-space:pre-wrap;word-break:break-word;display:block;font-size:13px}
+.dx .term .ft{padding:12px 18px;border-top:1px solid #4a2150;color:#6ee7b7;font-size:14px}
+.dx .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.dx .chips span{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:10px 16px;font-weight:600}
+</style>
+<div class="dx">
+<div class="tabs"><button class="tab on" data-t="start">Getting started</button><button class="tab" data-t="overview">Overview</button><button class="tab" data-t="ai">AI integration prompt</button></div>
+
+<div class="pane on" id="p-start">
+<div class="card hero2"><span class="pillb">API v1</span><h1>PAYMENT GATEWAY API reference</h1>
+<p class="mut">Create UPI checkouts, poll payment status and receive signed payment events. All responses are JSON and all amounts are in INR.</p>
+<a class="btn" href="{{'/keys' if user else '/register'}}">Create API key</a>
+<a class="btn2" href="/openapi.yaml" download>Download OpenAPI</a>
+<a class="btn2" href="/downloads/payment_gateway_telegram_bot.py" download>Download Python Telegram bot</a>
+<a class="btn2" href="/docs-api.txt" download>Download documentation (.txt)</a></div>
+<div class="card hl"><div class="eyebrow">BASE URL</div><div class="url">{{base}}/api</div>{% if base.startswith('https://') %}<span class="chip2">HTTPS recommended ✓</span>{% else %}<span class="chip2 w">Use HTTPS in production</span>{% endif %}</div>
+<div class="card"><h3><i>1</i>Create a key</h3><p>Open <a href="/keys"><b>API keys</b></a>, enter your shop name and generate a live key. Use Show / Copy to read it.</p>
+<h3><i>2</i>Create a payment</h3><pre>curl -X POST {{base}}/api/v1/payment/create \
+  -H "X-API-Key: YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"amount": 99, "order_id": "ORDER10001", "gateway": "paytm"}'</pre>
+<h3><i>3</i>Check status</h3><pre>curl {{base}}/api/v1/payment/status/ORDER10001 -H "X-API-Key: YOUR_KEY"</pre>
+<p>Deliver your product only when <b>status = SUCCESS</b>. Full details are in the Overview tab.</p></div>
+</div>
+
+<div class="pane" id="p-overview">
+<h2>API Documentation</h2><p class="lead">Accept UPI payments on your website, app or bot. Works with <b>Paytm</b> and <b>FamPay</b>. Base URL: <b>{{base}}</b></p>
+<div class="card"><h3><i>1</i>How it works</h3><ol>
+<li>Your <b>server</b> creates a payment with the amount and your own order id.</li>
+<li>You receive a <b>payment_url</b> (QR page), a <b>QR image</b> and the <b>upi_uri</b>.</li>
+<li>The customer scans the QR and pays with any UPI app.</li>
+<li>We verify the payment automatically and mark it <b>SUCCESS</b> only if order id and amount match.</li>
+<li>We send a signed <b>webhook</b> to your server (or you poll <b>verify</b>). Deliver the product only then.</li></ol></div>
+
+<div class="card"><h3><i>2</i>Quick start</h3><ol>
+<li>Open <b>Gateways</b> and save your setup, then press <b>Test: pay Rs 1</b> and pay it. “Payment Successful” means it works.</li>
+<li>Open <b>API Keys</b> and create a key. Copy it (shown once).</li>
+<li>Call the API from your <b>server</b> (examples below). Never put the key in website JavaScript or an app.</li></ol></div>
+
+<div class="card"><h3><i>3</i>Paytm or FamPay</h3><p>Choose with the <b>gateway</b> field: <code style="display:inline;padding:1px 6px">"gateway":"paytm"</code> or <code style="display:inline;padding:1px 6px">"gateway":"fampay"</code>. Always send it. If you leave it out, the first enabled gateway is used (FamPay first, then Paytm).</p>
+<div class="two">
+<div class="card" style="margin:0;box-shadow:none"><h3 style="margin-top:0">Paytm</h3><ul><li><b>Setup:</b> Shop Name, UPI ID, MID</li><li>Customer pays the exact amount</li><li>Verified automatically through Paytm</li><li>Result is usually instant</li></ul></div>
+<div class="card" style="margin:0;box-shadow:none"><h3 style="margin-top:0">FamPay</h3><ul><li><b>Setup:</b> Shop Name, UPI ID, Gmail, Gmail App Password</li><li>Amount gets a unique paise adjustment (+0.00 to +0.99)</li><li>Verified from the bank email in your Gmail</li><li>Can take a few seconds to a minute</li></ul></div></div>
+<div class="note"><b>FamPay amount:</b> if you ask for 99.00 the response may say <b>amount: 99.37</b>. The customer must pay exactly the amount returned. Show that amount to the customer.</div>
+<p>Your plan must include the gateway you use, otherwise you get <b>403 Gateway not included in your plan</b>.</p></div>
+
+<div class="card"><h3><i>4</i>Authentication</h3><p>Send your API key in one of these ways (60 requests per minute per key):</p>
+<pre>X-API-Key: YOUR_KEY
+Authorization: Bearer YOUR_KEY
+?api_key=YOUR_KEY      (simple GET endpoints only)</pre></div>
+
+<div class="card"><h3><i>5</i>Create a payment</h3><p><span class="tg post">POST</span><b>/api/v1/payment/create</b></p>
+<pre>curl -X POST "{{base}}/api/v1/payment/create" \
+  -H "X-API-Key: YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"amount": 99, "order_id": "ORDER10001", "gateway": "paytm"}'</pre>
+<div class="wrap"><table><tr><th>Field</th><th>Required</th><th>Meaning</th></tr>
+<tr><td>amount</td><td>yes</td><td>Rupees, e.g. 99 or 99.50</td></tr>
+<tr><td>order_id</td><td>no</td><td>Your own order id. Sending the same one again returns the same payment (safe retry).</td></tr>
+<tr><td>gateway</td><td>no*</td><td>paytm or fampay (*send it always)</td></tr>
+<tr><td>customer</td><td>no</td><td>Small JSON object, e.g. {"name":"Ravi"}</td></tr></table></div>
+<p><b>Response</b></p>
+<pre>{"success": true, "order_id": "ORDER10001", "pay_id": "PTM20261110...",
+ "status": "PENDING", "amount": 99.0, "currency": "INR", "gateway": "paytm",
+ "payment_url": "{{base}}/pay/PTM20261110...",
+ "qr_url":      "{{base}}/pay/PTM20261110.../qr.svg",
+ "qr_png_url":  "{{base}}/pay/PTM20261110.../qr.png",
+ "upi_uri": "upi://pay?pa=...", "expires_at": "2026-11-10T12:10:00Z"}</pre>
+<ul><li><b>payment_url</b> – hosted page with QR; turns to “Payment Successful” by itself</li><li><b>qr_png_url</b> – PNG, use for Telegram / WhatsApp bots</li><li><b>qr_url</b> – SVG, use on websites</li><li><b>upi_uri</b> – draw your own QR from this string</li><li>Every payment expires after 10 minutes</li></ul>
+<p><span class="tg get">GET</span>Simple version: <b>/api/create_order.php?amount=99&amp;order_id=MY1&amp;gateway=paytm&amp;api_key=YOUR_KEY</b> → <code style="display:inline;padding:1px 6px">{"status":"success","data":{…same fields…}}</code></p></div>
+
+<div class="card"><h3><i>6</i>Check payment status</h3>
+<p><span class="tg get">GET</span><b>/api/v1/payment/status/ORDER10001</b> &nbsp; <span class="tg post">POST</span><b>/api/v1/payment/verify</b> <code style="display:inline;padding:1px 6px">{"order_id":"ORDER10001"}</code></p>
+<p><span class="tg get">GET</span><b>/api/verify.php?order_id=ORDER10001&amp;api_key=YOUR_KEY</b></p>
+<pre>paid   → {"status":"success","data":{"order_id":"..","amount":99.0,"utr":"..","payment_time":".."}}
+unpaid → {"status":"pending|failed|expired","data":null}</pre>
+<p>order_id can be your order id or the pay_id. Poll every 3–5 seconds, or use webhooks.</p>
+<div class="wrap"><table><tr><th>Status</th><th>Meaning</th></tr>
+<tr><td class="PENDING">PENDING</td><td>Waiting for the customer</td></tr><tr><td class="SUCCESS">SUCCESS</td><td>Paid and verified. The <b>only</b> status that means paid</td></tr>
+<tr><td class="FAILED">FAILED</td><td>Provider reported a failure</td></tr><tr><td class="EXPIRED">EXPIRED</td><td>Not paid within 10 minutes</td></tr></table></div></div>
+
+<div class="card"><h3><i>7</i>Webhooks (automatic success message)</h3>
+<p>Set your https URL in <b>Webhooks</b> and copy the signing secret. Events: <b>payment.success</b>, payment.failed, payment.expired, webhook.test.</p>
+<pre>Headers:  X-Payment-Gateway-Timestamp: 1731234567
+          X-Payment-Gateway-Signature: sha256=HEX
+Signature = HMAC_SHA256(secret, timestamp + "." + rawBody)
+
+{"event":"payment.success","event_id":"PTM2026...:payment.success",
+ "order_id":"ORDER10001","pay_id":"PTM2026...","transaction_id":"123456789012",
+ "amount":99.0,"currency":"INR","status":"SUCCESS","gateway":"paytm"}</pre>
+<ul><li>Sign the <b>raw</b> body, not re-encoded JSON</li><li>Reject timestamps older than 5 minutes</li><li>Compare signatures in constant time</li><li>Ignore duplicate <b>event_id</b></li><li>Reply with any 2xx; failed deliveries are retried</li><li>Check <b>status = SUCCESS</b> and the amount before delivering</li></ul></div>
+
+<div class="card"><h3><i>8</i>Ready-made checkout (no code)</h3><p>Send the customer to this link. It shows the QR and confirms the payment by itself. It contains your key, so create it on your server.</p>
+<pre>{{base}}/checkout.php?amount=99&amp;order_id=MY1&amp;gateway=paytm&amp;api_key=YOUR_KEY</pre></div>
+
+<div class="card"><h3><i>9</i>Errors</h3><div class="wrap"><table><tr><th>Code</th><th>Meaning</th></tr>
+<tr><td>400</td><td>Bad request: missing or invalid amount, gateway not set up</td></tr><tr><td>401</td><td>Invalid API key</td></tr>
+<tr><td>403</td><td>Plan does not include this gateway, monthly limit reached, or account suspended</td></tr>
+<tr><td>404</td><td>Order not found</td></tr><tr><td>429</td><td>Rate limit (60/min) or too many pending payments</td></tr>
+<tr><td>502</td><td>Provider unreachable, retry shortly</td></tr></table></div>
+<pre>{"success": false, "error": "message"}</pre></div>
+
+<div class="card"><h3><i>10</i>Code examples</h3><p>Replace <b>GATEWAY</b> with "paytm" or "fampay".</p>
+<p><b>Python</b></p>
+<pre>import hmac, hashlib, time, requests
+from flask import Flask, request, abort
+BASE = "{{base}}"; KEY = "YOUR_KEY"; SECRET = "WEBHOOK_SECRET"
+GATEWAY = "paytm"   # or "fampay"
+app = Flask(__name__)
+
+def create_payment(amount, order_id):
+    r = requests.post(BASE + "/api/v1/payment/create", headers={"X-API-Key": KEY},
+        json={"amount": amount, "order_id": order_id, "gateway": GATEWAY}, timeout=20)
+    r.raise_for_status()
+    return r.json()     # payment_url, qr_png_url, amount
+
+@app.post("/payment-webhook")
+def webhook():
+    ts = request.headers.get("X-Payment-Gateway-Timestamp", "0")
+    sig = request.headers.get("X-Payment-Gateway-Signature", "")
+    body = request.get_data(as_text=True)
+    exp = "sha256=" + hmac.new(SECRET.encode(), (ts + "." + body).encode(), hashlib.sha256).hexdigest()
+    if abs(time.time() - int(ts)) > 300 or not hmac.compare_digest(exp, sig): abort(401)
+    d = request.get_json()
+    if d["event"] == "payment.success" and d["status"] == "SUCCESS":
+        pass            # deliver the order ONCE per d["event_id"]
+    return "ok"</pre>
+<p><b>PHP</b></p>
+<pre>$ch = curl_init("$BASE/api/v1/payment/create");
+curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_POST=>true,
+  CURLOPT_HTTPHEADER=>["X-API-Key: $KEY","Content-Type: application/json"],
+  CURLOPT_POSTFIELDS=>json_encode(["amount"=>100,"order_id"=>"ORDER10001","gateway"=>"paytm"])]);
+$res = json_decode(curl_exec($ch), true);
+header("Location: ".$res["payment_url"]);
+// webhook
+$body = file_get_contents("php://input"); $ts = $_SERVER["HTTP_X_PAYMENT_GATEWAY_TIMESTAMP"];
+$exp = "sha256=".hash_hmac("sha256", "$ts.$body", $SECRET);
+if (!hash_equals($exp, $_SERVER["HTTP_X_PAYMENT_GATEWAY_SIGNATURE"])) { http_response_code(401); exit; }</pre>
+<p><b>Node.js (18+)</b></p>
+<pre>const crypto = require("crypto");
+const r = await fetch(BASE + "/api/v1/payment/create", { method: "POST",
+  headers: { "X-API-Key": KEY, "Content-Type": "application/json" },
+  body: JSON.stringify({ amount: 100, order_id: "ORDER10001", gateway: "paytm" }) });
+const pay = await r.json();            // pay.payment_url
+// webhook (express.raw body)
+const exp = "sha256=" + crypto.createHmac("sha256", SECRET).update(ts + "." + rawBody).digest("hex");</pre>
+<p><b>Telegram bot</b></p>
+<pre>async def buy(update, ctx):
+    p = create_payment(99, "TG-" + str(update.effective_user.id) + "-" + str(int(time.time())))
+    await update.message.reply_photo(p["qr_png_url"],
+        caption="Pay exactly Rs " + str(p["amount"]) + "\n" + p["payment_url"])
+    # deliver ONLY from the webhook or after verify returns success</pre></div>
+
+<div class="card"><h3><i>11</i>Using an AI to build your integration</h3><p>Download the .txt file below and give it to your AI assistant (ChatGPT, Claude, etc.) together with a message like:</p>
+<pre>Use this API documentation. Integrate it into my website/bot.
+Use gateway "paytm" only.          (or: Use gateway "fampay" only.)</pre>
+<p>The AI will then use only the gateway you chose.</p></div>
+
+<div class="card"><h3><i>12</i>Security checklist</h3><ul><li>API key and webhook secret only on your server</li><li>Verify the webhook signature and timestamp</li><li>Check status and amount before delivering</li><li>Make delivery idempotent (event_id / order_id)</li><li>Use a unique order_id for every purchase</li><li>Use https for your webhook URL</li></ul></div>
+
+
+</div>
+
+<div class="pane" id="p-ai"><div class="card gen"><span class="pillb">One-prompt setup</span><h2 style="font-size:28px;line-height:1.2">Generate a website or Telegram bot integration prompt</h2>
+<p class="mut">Choose your language and target, then copy one implementation-ready prompt into ChatGPT, Claude, Cursor or another coding assistant. It contains the real endpoints, so the AI writes code that works with this gateway.</p>
+<div class="card" style="margin:14px 0 0">
+<label for="g-lang">Language</label><select id="g-lang">{% for l in langs %}<option>{{l}}</option>{% endfor %}</select>
+<label for="g-target">Integration target</label><select id="g-target">{% for k,v in targets.items() %}<option value="{{k}}">{{v}}</option>{% endfor %}</select>
+<label for="g-gw">Gateway</label><select id="g-gw"><option value="">Auto / configurable</option><option value="paytm">Paytm</option><option value="fampay">FamPay</option></select>
+<label for="g-det">Project details <span style="float:right;font-weight:400">optional</span></label><textarea id="g-det" placeholder="Example: Add a Pay Now button or /pay command and mark orders paid in the orders table."></textarea>
+<button type="button" class="wide" id="g-go" style="margin-top:14px">Generate complete prompt</button></div>
+<div class="term" style="margin-top:16px"><div class="th"><h3>Integration prompt</h3><div class="sub" id="g-sub">JavaScript · Website</div>
+<div class="brow"><button type="button" class="g" id="g-dl">Download .txt</button><button type="button" id="g-cp">Copy prompt</button></div></div>
+<pre id="g-out">Generating…</pre><div class="ft">Choose your language, then copy the complete prompt.</div></div>
+<div class="chips"><span>✓ Website, Telegram &amp; Discord bots</span><span>✓ Server-side verification</span><span>✓ Signed webhooks</span><span>✓ Idempotent order ids</span></div></div></div>
+</div>
+<script>
+(function(){
+var tabs=document.querySelectorAll('.dx .tab');
+function show(t){tabs.forEach(function(b){b.classList.toggle('on',b.dataset.t===t)});['start','overview','ai'].forEach(function(n){document.getElementById('p-'+n).classList.toggle('on',n===t)});if(t==='ai'&&!window._gen){gen()}}
+tabs.forEach(function(b){b.onclick=function(){show(b.dataset.t);try{history.replaceState(null,'','#'+b.dataset.t)}catch(e){}}});
+var h=(location.hash||'').slice(1);if(['start','overview','ai'].indexOf(h)>-1)show(h);
+var $=function(i){return document.getElementById(i)};
+async function gen(){window._gen=1;var q=new URLSearchParams({lang:$('g-lang').value,target:$('g-target').value,gateway:$('g-gw').value,details:$('g-det').value});
+$('g-out').textContent='Generating…';try{var r=await fetch('/docs-api/prompt?'+q);$('g-out').textContent=await r.text()}catch(e){$('g-out').textContent='Could not generate the prompt. Check your connection.'}
+$('g-sub').textContent=$('g-lang').value+' · '+$('g-target').selectedOptions[0].text}
+$('g-go').onclick=gen;['g-lang','g-target','g-gw'].forEach(function(i){$(i).onchange=gen});
+$('g-cp').onclick=async function(){var b=this,t=$('g-out').textContent;try{await navigator.clipboard.writeText(t)}catch(_){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}var o=b.textContent;b.textContent='Copied ✓';setTimeout(function(){b.textContent=o},1500)};
+$('g-dl').onclick=function(){var l=$('g-lang').value.toLowerCase().replace(/[^a-z0-9]+/g,'-');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([$('g-out').textContent],{type:'text/plain'}));a.download='payment-gateway-prompt-'+l+'-'+$('g-target').value+'.txt';document.body.appendChild(a);a.click();a.remove()};
+})();
+</script>{% endblock %}
